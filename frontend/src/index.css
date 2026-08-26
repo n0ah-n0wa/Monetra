@@ -1,0 +1,83 @@
+:root {
+  color-scheme: light;
+  --bg: #f3f7f6;
+  --bg-accent: #d9ebe7;
+  --ink: #132628;
+  --muted: #4a6365;
+  --brand: #0f3d3e;
+  --ok: #1f6f5b;
+  --error: #8b2e2e;
+  --font-display: "Iowan Old Style", "Palatino Linotype", Palatino, serif;
+  --font-body: "Segoe UI", "Helvetica Neue", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-body);
+  color: var(--ink);
+  background:
+    radial-gradient(circle at top left, var(--bg-accent), transparent 45%),
+    linear-gradient(160deg, #f7fbfa 0%, var(--bg) 55%, #e7f0ee 100%);
+}
+
+.page {
+  max-width: 48rem;
+  margin: 0 auto;
+  padding: 4rem 1.5rem 3rem;
+}
+
+.hero {
+  margin-bottom: 2.5rem;
+}
+
+.brand {
+  margin: 0 0 0.75rem;
+  font-family: var(--font-display);
+  font-size: clamp(2.75rem, 8vw, 4.5rem);
+  line-height: 0.95;
+  letter-spacing: -0.03em;
+  color: var(--brand);
+}
+
+.hero h1 {
+  margin: 0 0 0.75rem;
+  font-size: clamp(1.25rem, 3vw, 1.75rem);
+  font-weight: 600;
+}
+
+.lede {
+  margin: 0;
+  max-width: 36rem;
+  color: var(--muted);
+  line-height: 1.55;
+}
+
+.status h2 {
+  margin: 0 0 0.5rem;
+  font-size: 1rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--muted);
+}
+
+.status p {
+  margin: 0;
+}
+
+.status .ok {
+  color: var(--ok);
+}
+
+.status .error {
+  color: var(--error);
+}

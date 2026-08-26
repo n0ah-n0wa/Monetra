@@ -1,0 +1,18 @@
+"""Health endpoint tests."""
+
+from httpx import AsyncClient
+
+
+async def test_health_returns_ok(client: AsyncClient) -> None:
+    response = await client.get("/health")
+    assert response.status_code == 200
+    assert response.json() == {"status": "ok"}
+
+
+async def test_ready_endpoint_shape(client: AsyncClient) -> None:
+    response = await client.get("/ready")
+    assert response.status_code in {200, 503}
+    payload = response.json()
+    assert "status" in payload
+    assert "database" in payload
+    assert isinstance(payload["database"], bool)

@@ -1,0 +1,9 @@
+{
+  "project": "Monetra",
+  "rules": [
+    "Follow SPECIFICATIONS.md and AGENTS.md.",
+    "Do not implement fake business functionality.",
+    "Use Decimal/NUMERIC for money; never float.",
+    "Prefer small incremental changes with tests."
+  ]
+}
