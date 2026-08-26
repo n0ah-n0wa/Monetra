@@ -1,5 +1,5 @@
-"""Core application configuration and cross-cutting concerns."""
+"""Core package exports."""
 
-from app.core.config import settings
+from app.core.config import Settings, get_settings, settings
 
-__all__ = ["settings"]
+__all__ = ["Settings", "get_settings", "settings"]

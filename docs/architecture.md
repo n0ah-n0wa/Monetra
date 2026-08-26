@@ -16,15 +16,22 @@ Nginx (TLS termination in production)
 ## Backend layers
 
 ```text
-api/           HTTP adapters, dependency injection
+api/           HTTP adapters, dependency injection, exception handlers
 services/      Application orchestration
-domain/        Pure financial and business rules
+domain/        Pure financial and business rules; shared domain errors
 repositories/  Persistence abstractions
 models/        SQLAlchemy ORM models
-schemas/       Pydantic request/response models
+schemas/       Pydantic request/response models (including ErrorResponse)
 db/            Engine, sessions, declarative base
-core/          Settings, logging, shared infrastructure
+core/          Settings, logging, security helpers, middleware, exceptions
 ```
+
+Cross-cutting foundation:
+
+- Request correlation via `X-Request-ID` and structured logs (`request_id=…`)
+- Centralized `AppError` → `{ "error": { "code", "message", "details" }, "request_id" }`
+- Argon2id + JWT helpers in `core/security.py` (auth routes not implemented yet)
+- Production settings reject default JWT secrets, `DEBUG=true`, and wildcard CORS
 
 Health endpoints live at the application root:
 

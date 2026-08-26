@@ -1,14 +1,20 @@
 """Application settings loaded from environment variables."""
 
 from functools import lru_cache
-from typing import Annotated, Literal
+from typing import Annotated, Literal, Self
 
-from pydantic import Field, PostgresDsn, field_validator
+from pydantic import Field, PostgresDsn, field_validator, model_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
+
+_DEFAULT_JWT_SECRET = "change-me-in-production-use-a-long-random-secret"  # noqa: S105
 
 
 class Settings(BaseSettings):
-    """Runtime configuration for the Monetra backend."""
+    """Runtime configuration for the Monetra backend.
+
+    Development, test, and production are selected via ``APP_ENV``.
+    Production rejects insecure defaults.
+    """
 
     model_config = SettingsConfigDict(
         env_file=(".env", "../.env"),
@@ -22,6 +28,10 @@ class Settings(BaseSettings):
     debug: bool = False
     api_v1_prefix: str = "/api/v1"
     log_level: str = "INFO"
+    api_description: str = (
+        "Monetra personal finance platform API. "
+        "Monetary values use exact decimal arithmetic."
+    )
 
     database_url: PostgresDsn = Field(
         default=PostgresDsn(
@@ -30,15 +40,13 @@ class Settings(BaseSettings):
     )
     database_pool_size: int = 5
     database_max_overflow: int = 10
+    database_echo: bool = False
 
     cors_origins: Annotated[list[str], NoDecode] = Field(
         default_factory=lambda: ["http://localhost:5173"],
     )
 
-    jwt_secret_key: str = Field(
-        default="change-me-in-production-use-a-long-random-secret",
-        min_length=32,
-    )
+    jwt_secret_key: str = Field(default=_DEFAULT_JWT_SECRET, min_length=32)
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 15
     refresh_token_expire_days: int = 14
@@ -50,13 +58,47 @@ class Settings(BaseSettings):
             return [item.strip() for item in value.split(",") if item.strip()]
         return value
 
+    @model_validator(mode="after")
+    def validate_environment(self) -> Self:
+        if self.app_env == "production":
+            if self.jwt_secret_key == _DEFAULT_JWT_SECRET:
+                msg = "JWT_SECRET_KEY must be set to a non-default value in production"
+                raise ValueError(msg)
+            if self.debug:
+                msg = "DEBUG must be false when APP_ENV=production"
+                raise ValueError(msg)
+            if "*" in self.cors_origins:
+                msg = "CORS_ORIGINS must not use wildcard '*' in production"
+                raise ValueError(msg)
+        return self
+
     @property
     def is_production(self) -> bool:
         return self.app_env == "production"
 
     @property
+    def is_development(self) -> bool:
+        return self.app_env == "development"
+
+    @property
+    def is_test(self) -> bool:
+        return self.app_env == "test"
+
+    @property
     def async_database_url(self) -> str:
         return str(self.database_url)
+
+    @property
+    def docs_url(self) -> str | None:
+        return None if self.is_production else "/docs"
+
+    @property
+    def redoc_url(self) -> str | None:
+        return None if self.is_production else "/redoc"
+
+    @property
+    def openapi_url(self) -> str | None:
+        return None if self.is_production else "/openapi.json"
 
 
 @lru_cache

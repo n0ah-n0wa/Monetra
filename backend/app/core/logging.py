@@ -1,15 +1,25 @@
-"""Structured logging configuration."""
+"""Structured application logging."""
+
+from __future__ import annotations
 
 import logging
 import sys
 from collections.abc import MutableMapping
 from typing import Any
 
+from app.core.request_context import get_request_id
 
-class _ServiceFilter(logging.Filter):
+SERVICE_NAME = "monetra-backend"
+
+
+class _ContextFilter(logging.Filter):
+    """Inject service and request_id fields into every log record."""
+
     def filter(self, record: logging.LogRecord) -> bool:
         if not hasattr(record, "service"):
-            record.service = "monetra-backend"
+            record.service = SERVICE_NAME
+        request_id = get_request_id()
+        record.request_id = request_id or "-"
         return True
 
 
@@ -20,12 +30,12 @@ def configure_logging(level: str = "INFO") -> None:
     root.setLevel(level.upper())
 
     handler = logging.StreamHandler(sys.stdout)
-    handler.addFilter(_ServiceFilter())
+    handler.addFilter(_ContextFilter())
     handler.setFormatter(
         logging.Formatter(
             fmt=(
                 "%(asctime)s %(levelname)s service=%(service)s "
-                "logger=%(name)s %(message)s"
+                "request_id=%(request_id)s logger=%(name)s %(message)s"
             ),
             datefmt="%Y-%m-%dT%H:%M:%S%z",
         )
@@ -38,7 +48,7 @@ def configure_logging(level: str = "INFO") -> None:
 
 
 class ServiceLoggerAdapter(logging.LoggerAdapter[logging.Logger]):
-    """Logger adapter that injects a stable service field."""
+    """Logger adapter that injects stable service metadata."""
 
     def process(
         self,
@@ -46,7 +56,7 @@ class ServiceLoggerAdapter(logging.LoggerAdapter[logging.Logger]):
         kwargs: MutableMapping[str, Any],
     ) -> tuple[str, MutableMapping[str, Any]]:
         extra = dict(kwargs.get("extra") or {})
-        service = "monetra-backend"
+        service = SERVICE_NAME
         if self.extra:
             service = str(self.extra.get("service", service))
         extra.setdefault("service", service)
@@ -57,5 +67,5 @@ class ServiceLoggerAdapter(logging.LoggerAdapter[logging.Logger]):
 def get_logger(name: str) -> ServiceLoggerAdapter:
     return ServiceLoggerAdapter(
         logging.getLogger(name),
-        {"service": "monetra-backend"},
+        {"service": SERVICE_NAME},
     )
