@@ -1,0 +1,1 @@
+"""Financial integrity test package."""
