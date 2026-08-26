@@ -65,6 +65,9 @@ class Settings(BaseSettings):
     auth_rate_limit_max_requests: int = Field(default=10, ge=1)
     auth_rate_limit_window_seconds: int = Field(default=60, ge=1)
 
+    api_default_page_size: int = Field(default=20, ge=1)
+    api_max_page_size: int = Field(default=100, ge=1)
+
     @field_validator("cors_origins", mode="before")
     @classmethod
     def parse_cors_origins(cls, value: object) -> object:

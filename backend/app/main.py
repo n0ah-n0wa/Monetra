@@ -68,6 +68,18 @@ def custom_openapi(application: FastAPI, settings: Settings) -> dict[str, object
                 "name": "users",
                 "description": "Authenticated user profile endpoints.",
             },
+            {
+                "name": "accounts",
+                "description": "Financial account management.",
+            },
+            {
+                "name": "categories",
+                "description": "Income and expense category management.",
+            },
+            {
+                "name": "transactions",
+                "description": "Income and expense transaction management.",
+            },
         ],
     )
     schema["info"]["x-monetra-api-version"] = "v1"

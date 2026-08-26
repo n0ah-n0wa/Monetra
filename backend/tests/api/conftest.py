@@ -1,5 +1,6 @@
 """API integration test fixtures."""
 
+import uuid
 from collections.abc import AsyncIterator
 
 import pytest
@@ -25,6 +26,20 @@ async def auth_client(application) -> AsyncIterator[AsyncClient]:
 
         if isinstance(limiter, InMemoryRateLimiter):
             limiter.reset()
+
+
+@pytest.fixture
+async def authenticated_client(auth_client: AsyncClient) -> AsyncClient:
+    """Register a user and attach a bearer token to the client."""
+    email = f"user-{uuid.uuid4().hex[:12]}@example.com"
+    response = await auth_client.post(
+        "/api/v1/auth/register",
+        json={"email": email, "password": "SecurePass1"},
+    )
+    assert response.status_code == 201, response.text
+    token = response.json()["access_token"]
+    auth_client.headers.update({"Authorization": f"Bearer {token}"})
+    return auth_client
 
 
 @pytest.fixture

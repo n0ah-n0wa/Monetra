@@ -25,7 +25,6 @@ os.environ.setdefault("DEBUG", "false")
 
 @pytest.fixture
 async def db_engine(app_settings):
-
     from app.db.session import create_async_engine_from_settings, ping_database
 
     engine = create_async_engine_from_settings(app_settings)
@@ -38,7 +37,6 @@ async def db_engine(app_settings):
 
 @pytest.fixture
 async def db_session(db_engine):
-
     from sqlalchemy.ext.asyncio import AsyncSession
 
     async with db_engine.connect() as connection:
