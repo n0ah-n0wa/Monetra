@@ -99,3 +99,19 @@ class ValidationAppError(AppError):
             status_code=422,
             details=details,
         )
+
+
+class RateLimitError(AppError):
+    def __init__(
+        self,
+        *,
+        code: str = "RATE_LIMIT_EXCEEDED",
+        message: str = "Too many requests. Please try again later.",
+        details: dict[str, Any] | None = None,
+    ) -> None:
+        super().__init__(
+            code=code,
+            message=message,
+            status_code=429,
+            details=details,
+        )

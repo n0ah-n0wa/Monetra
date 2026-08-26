@@ -1,6 +1,6 @@
 """Database schema and model integration tests."""
 
-from datetime import date
+from datetime import UTC, date, datetime
 from decimal import Decimal
 
 import pytest
@@ -52,6 +52,8 @@ EXPECTED_TABLES = {
     "import_jobs",
     "audit_events",
     "exchange_rates",
+    "refresh_tokens",
+    "password_reset_tokens",
 }
 
 
@@ -100,9 +102,22 @@ async def test_money_columns_use_numeric(db_engine) -> None:
 
 @pytest.mark.asyncio
 async def test_user_email_must_be_unique(db_session: AsyncSession) -> None:
-    db_session.add(User(email="dup@example.com", password_hash="hash-a"))
+    changed_at = datetime.now(UTC)
+    db_session.add(
+        User(
+            email="dup@example.com",
+            password_hash="hash-a",
+            password_changed_at=changed_at,
+        ),
+    )
     await db_session.flush()
-    db_session.add(User(email="dup@example.com", password_hash="hash-b"))
+    db_session.add(
+        User(
+            email="dup@example.com",
+            password_hash="hash-b",
+            password_changed_at=changed_at,
+        ),
+    )
     with pytest.raises(IntegrityError):
         await db_session.flush()
 

@@ -1,11 +1,9 @@
 """Database integration test fixtures."""
 
-from collections.abc import AsyncIterator
-from datetime import date
+from datetime import UTC, date, datetime
 from decimal import Decimal
 
 import pytest
-from app.db.session import create_async_engine_from_settings, ping_database
 from app.models.category import Category
 from app.models.enums import (
     AccountType,
@@ -15,40 +13,16 @@ from app.models.enums import (
 from app.models.financial_account import FinancialAccount
 from app.models.transaction import Transaction
 from app.models.user import User
-from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
-
-
-@pytest.fixture
-async def db_engine(app_settings) -> AsyncIterator[AsyncEngine]:
-    engine = create_async_engine_from_settings(app_settings)
-    if not await ping_database(engine):
-        await engine.dispose()
-        pytest.skip("PostgreSQL is not available")
-    yield engine
-    await engine.dispose()
-
-
-@pytest.fixture
-async def db_session(db_engine: AsyncEngine) -> AsyncIterator[AsyncSession]:
-    """Yield a session wrapped in a connection transaction that always rolls back."""
-    async with db_engine.connect() as connection:
-        transaction = await connection.begin()
-        session = AsyncSession(
-            bind=connection,
-            expire_on_commit=False,
-            join_transaction_mode="create_savepoint",
-        )
-        try:
-            yield session
-        finally:
-            await session.close()
-            if transaction.is_active:
-                await transaction.rollback()
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 @pytest.fixture
 async def user(db_session: AsyncSession) -> User:
-    entity = User(email="user@example.com", password_hash="hashed-password")
+    entity = User(
+        email="user@example.com",
+        password_hash="hashed-password",
+        password_changed_at=datetime.now(UTC),
+    )
     db_session.add(entity)
     await db_session.flush()
     return entity
@@ -56,7 +30,11 @@ async def user(db_session: AsyncSession) -> User:
 
 @pytest.fixture
 async def other_user(db_session: AsyncSession) -> User:
-    entity = User(email="other@example.com", password_hash="hashed-password")
+    entity = User(
+        email="other@example.com",
+        password_hash="hashed-password",
+        password_changed_at=datetime.now(UTC),
+    )
     db_session.add(entity)
     await db_session.flush()
     return entity

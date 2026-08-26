@@ -50,6 +50,20 @@ class Settings(BaseSettings):
     jwt_algorithm: str = "HS256"
     access_token_expire_minutes: int = 15
     refresh_token_expire_days: int = 14
+    password_reset_token_expire_minutes: int = Field(default=60, ge=1)
+
+    auth_password_min_length: int = Field(default=8, ge=8)
+    auth_password_require_letter: bool = True
+    auth_password_require_digit: bool = True
+
+    refresh_token_cookie_name: str = "monetra_refresh_token"  # noqa: S105
+    refresh_token_cookie_path: str = "/api/v1/auth"  # noqa: S105
+    refresh_token_cookie_domain: str | None = None
+    refresh_token_cookie_secure: bool = False
+    refresh_token_cookie_samesite: Literal["lax", "strict", "none"] = "lax"  # noqa: S105
+
+    auth_rate_limit_max_requests: int = Field(default=10, ge=1)
+    auth_rate_limit_window_seconds: int = Field(default=60, ge=1)
 
     @field_validator("cors_origins", mode="before")
     @classmethod
@@ -70,6 +84,7 @@ class Settings(BaseSettings):
             if "*" in self.cors_origins:
                 msg = "CORS_ORIGINS must not use wildcard '*' in production"
                 raise ValueError(msg)
+            object.__setattr__(self, "refresh_token_cookie_secure", True)
         return self
 
     @property

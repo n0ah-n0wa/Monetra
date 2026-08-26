@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+from datetime import datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import String, UniqueConstraint
+from sqlalchemy import DateTime, String, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -18,7 +19,9 @@ if TYPE_CHECKING:
     from app.models.financial_goal import FinancialGoal
     from app.models.import_job import ImportJob
     from app.models.notification import Notification
+    from app.models.password_reset_token import PasswordResetToken
     from app.models.recurring_transaction import RecurringTransaction
+    from app.models.refresh_token import RefreshToken
     from app.models.transaction import Transaction
     from app.models.transfer import Transfer
 
@@ -33,6 +36,10 @@ class User(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         String(3),
         nullable=False,
         default="USD",
+    )
+    password_changed_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
     )
 
     financial_accounts: Mapped[list[FinancialAccount]] = relationship(
@@ -53,6 +60,12 @@ class User(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     audit_events: Mapped[list[AuditEvent]] = relationship(
         back_populates="actor",
         foreign_keys="AuditEvent.actor_id",
+    )
+    refresh_tokens: Mapped[list[RefreshToken]] = relationship(
+        back_populates="user",
+    )
+    password_reset_tokens: Mapped[list[PasswordResetToken]] = relationship(
+        back_populates="user",
     )
 
     def __repr__(self) -> str:

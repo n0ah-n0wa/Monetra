@@ -1,9 +1,9 @@
-"""Security primitives: password hashing and JWT helpers.
+"""Security primitives: password hashing and JWT helpers."""
 
-Authentication endpoints are not implemented here; this module provides
-the shared cryptographic utilities required by future auth flows.
-"""
+from __future__ import annotations
 
+import hashlib
+import secrets
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
@@ -75,3 +75,57 @@ def decode_token(token: str, *, settings: Settings | None = None) -> dict[str, A
             message="Token is invalid or expired.",
         )
     return payload
+
+
+def decode_access_token(
+    token: str,
+    *,
+    settings: Settings | None = None,
+) -> dict[str, Any]:
+    """Decode a JWT and ensure it is an access token."""
+    payload = decode_token(token, settings=settings)
+    if payload.get("type") != "access":
+        raise UnauthorizedError(
+            code="INVALID_TOKEN",
+            message="Token is invalid or expired.",
+        )
+    return payload
+
+
+def assert_access_token_active_for_user(
+    payload: dict[str, Any],
+    *,
+    password_changed_at: datetime,
+) -> None:
+    """Reject access tokens issued before the user's latest password change."""
+    issued_at = payload.get("iat")
+    if not isinstance(issued_at, (int, float)):
+        raise UnauthorizedError(
+            code="INVALID_TOKEN",
+            message="Token is invalid or expired.",
+        )
+    if int(issued_at) < int(password_changed_at.timestamp()):
+        raise UnauthorizedError(
+            code="INVALID_TOKEN",
+            message="Token is invalid or expired.",
+        )
+
+
+def generate_refresh_token() -> str:
+    """Create a cryptographically secure opaque refresh token."""
+    return secrets.token_urlsafe(32)
+
+
+def generate_password_reset_token() -> str:
+    """Create a cryptographically secure opaque password reset token."""
+    return secrets.token_urlsafe(32)
+
+
+def hash_opaque_token(token: str) -> str:
+    """Return a stable SHA-256 hex digest for opaque token storage."""
+    return hashlib.sha256(token.encode("utf-8")).hexdigest()
+
+
+def hash_refresh_token(token: str) -> str:
+    """Return a stable SHA-256 hex digest for refresh-token storage."""
+    return hash_opaque_token(token)

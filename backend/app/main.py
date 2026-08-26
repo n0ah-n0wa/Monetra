@@ -14,7 +14,9 @@ from app.api.v1.router import api_router
 from app.core.config import Settings, get_settings
 from app.core.logging import configure_logging, get_logger
 from app.core.middleware import RequestIdMiddleware, SecurityHeadersMiddleware
+from app.core.rate_limit import InMemoryRateLimiter
 from app.db.session import dispose_db, init_db
+from app.services.notification_providers import create_notification_provider
 
 logger = get_logger(__name__)
 
@@ -28,6 +30,8 @@ def create_lifespan(
         # Drop any import-time / previous engine before binding this app's settings.
         await dispose_db()
         init_db(settings)
+        _app.state.rate_limiter = InMemoryRateLimiter()
+        _app.state.notification_provider = create_notification_provider(settings)
         logger.info(
             "event=startup app=%s version=%s env=%s",
             settings.app_name,
@@ -53,6 +57,16 @@ def custom_openapi(application: FastAPI, settings: Settings) -> dict[str, object
             {
                 "name": "health",
                 "description": "Liveness and readiness probes.",
+            },
+            {
+                "name": "auth",
+                "description": (
+                    "Registration, login, refresh, logout, and password reset."
+                ),
+            },
+            {
+                "name": "users",
+                "description": "Authenticated user profile endpoints.",
             },
         ],
     )
