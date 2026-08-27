@@ -77,12 +77,20 @@ def custom_openapi(application: FastAPI, settings: Settings) -> dict[str, object
                 "description": "Income and expense category management.",
             },
             {
+                "name": "budgets",
+                "description": "Budget management and utilization analytics.",
+            },
+            {
                 "name": "transactions",
                 "description": "Income and expense transaction management.",
             },
             {
                 "name": "transfers",
                 "description": "Account-to-account transfer management.",
+            },
+            {
+                "name": "recurring-transactions",
+                "description": "Recurring transaction schedule management.",
             },
         ],
     )

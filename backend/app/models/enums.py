@@ -53,6 +53,12 @@ class BudgetScope(StrEnum):
     OVERALL = "overall"
 
 
+class BudgetStatus(StrEnum):
+    HEALTHY = "healthy"
+    WARNING = "warning"
+    EXCEEDED = "exceeded"
+
+
 class GoalStatus(StrEnum):
     ACTIVE = "active"
     COMPLETED = "completed"
