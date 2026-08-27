@@ -63,3 +63,41 @@ export function compareMoneyStrings(left: string, right: string): number {
   const fractionCompare = a.fraction.localeCompare(b.fraction);
   return a.negative ? fractionCompare * -1 : fractionCompare;
 }
+
+/** Formats a backend decimal percent string (e.g. "75.0000") for display. */
+export function formatPercentDisplay(value: string | null | undefined): string {
+  if (value === null || value === undefined || value.trim() === "") {
+    return "—";
+  }
+
+  const trimmed = value.trim();
+  if (!trimmed.includes(".")) {
+    return `${trimmed}%`;
+  }
+
+  const [whole, fraction = ""] = trimmed.split(".");
+  const trimmedFraction = fraction.replace(/0+$/, "");
+  if (!trimmedFraction) {
+    return `${whole}%`;
+  }
+  return `${whole}.${trimmedFraction}%`;
+}
+
+/**
+ * Clamps a backend percent string to 0–100 for progress-bar width.
+ * Display-only; does not affect financial calculations.
+ */
+export function percentToBarWidth(percent: string | null | undefined): string {
+  if (percent === null || percent === undefined || percent.trim() === "") {
+    return "0%";
+  }
+
+  const trimmed = percent.trim();
+  const numeric = Number(trimmed);
+  if (Number.isNaN(numeric)) {
+    return "0%";
+  }
+
+  const clamped = Math.min(100, Math.max(0, numeric));
+  return `${clamped}%`;
+}

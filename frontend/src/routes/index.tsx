@@ -1,16 +1,19 @@
+import { lazy, Suspense } from "react";
 import { Navigate, createBrowserRouter } from "react-router-dom";
 import { AppShell } from "@/components/layout/AppShell";
+import { LoadingState } from "@/components/states/LoadingState";
 import { GuestRoute, ProtectedRoute } from "@/components/routing/ProtectedRoute";
 import { AccountDetailPage } from "@/features/accounts/pages/AccountDetailPage";
 import { AccountsPage } from "@/features/accounts/pages/AccountsPage";
-import { AnalyticsPage } from "@/features/analytics/pages/AnalyticsPage";
 import { ForgotPasswordPage } from "@/features/auth/pages/ForgotPasswordPage";
 import { LoginPage } from "@/features/auth/pages/LoginPage";
 import { RegisterPage } from "@/features/auth/pages/RegisterPage";
 import { ResetPasswordPage } from "@/features/auth/pages/ResetPasswordPage";
-import { BudgetDetailPage, BudgetsPage } from "@/features/budgets/pages/BudgetsPage";
+import { BudgetDetailPage } from "@/features/budgets/pages/BudgetDetailPage";
+import { BudgetsPage } from "@/features/budgets/pages/BudgetsPage";
 import { CategoriesPage } from "@/features/categories/pages/CategoriesPage";
-import { GoalDetailPage, GoalsPage } from "@/features/goals/pages/GoalsPage";
+import { GoalDetailPage } from "@/features/goals/pages/GoalDetailPage";
+import { GoalsPage } from "@/features/goals/pages/GoalsPage";
 import { NotificationsPage } from "@/features/notifications/pages/NotificationsPage";
 import { SettingsPage } from "@/features/settings/pages/SettingsPage";
 import { TransactionCreatePage } from "@/features/transactions/pages/TransactionCreatePage";
@@ -19,6 +22,20 @@ import { TransactionsPage } from "@/features/transactions/pages/TransactionsPage
 import { routes } from "@/lib/routes";
 import { DashboardPage } from "@/pages/DashboardPage";
 import { NotFoundPage } from "@/pages/NotFoundPage";
+
+const AnalyticsPage = lazy(() =>
+  import("@/features/analytics/pages/AnalyticsPage").then((module) => ({
+    default: module.AnalyticsPage,
+  })),
+);
+
+function AnalyticsRoute() {
+  return (
+    <Suspense fallback={<LoadingState title="Loading analytics" />}>
+      <AnalyticsPage />
+    </Suspense>
+  );
+}
 
 export const router = createBrowserRouter([
   {
@@ -51,7 +68,7 @@ export const router = createBrowserRouter([
           { path: "/budgets/:id", element: <BudgetDetailPage /> },
           { path: routes.goals, element: <GoalsPage /> },
           { path: "/goals/:id", element: <GoalDetailPage /> },
-          { path: routes.analytics, element: <AnalyticsPage /> },
+          { path: routes.analytics, element: <AnalyticsRoute /> },
           { path: routes.notifications, element: <NotificationsPage /> },
           { path: routes.settings, element: <SettingsPage /> },
         ],

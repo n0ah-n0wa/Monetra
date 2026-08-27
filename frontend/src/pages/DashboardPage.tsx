@@ -1,69 +1,43 @@
-import { useQuery } from "@tanstack/react-query";
-import { Link } from "react-router-dom";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { Alert } from "@/components/ui/Alert";
+import { BudgetUtilizationWidget } from "@/features/dashboard/components/BudgetUtilizationWidget";
+import { FinancialGoalsWidget } from "@/features/dashboard/components/FinancialGoalsWidget";
+import { FinancialInsightsWidget } from "@/features/dashboard/components/FinancialInsightsWidget";
+import { RecentTransactionsWidget } from "@/features/dashboard/components/RecentTransactionsWidget";
+import { SpendingByCategoryWidget } from "@/features/dashboard/components/SpendingByCategoryWidget";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/Card";
-import { ErrorState } from "@/components/states/ErrorState";
-import { LoadingState } from "@/components/states/LoadingState";
-import { fetchHealth } from "@/api/health";
+  SummaryStatsLinks,
+  SummaryStatsRow,
+} from "@/features/dashboard/components/SummaryStatsWidget";
 import { useAuth } from "@/features/auth/hooks";
-import { queryKeys } from "@/lib/query-client";
-import { routes } from "@/lib/routes";
 
 export function DashboardPage() {
   const { user } = useAuth();
-  const healthQuery = useQuery({
-    queryKey: queryKeys.health,
-    queryFn: fetchHealth,
-  });
 
   return (
     <PageContainer>
       <PageHeader
         title="Dashboard"
-        description="Your financial overview will appear here as features are implemented."
+        description={
+          user
+            ? `Welcome back. Reporting in ${user.reporting_currency}.`
+            : "Your financial overview."
+        }
       />
-      <div className="dashboard-grid">
-        <Card>
-          <CardHeader>
-            <CardTitle>Welcome back</CardTitle>
-            <CardDescription>
-              {user ? `Signed in as ${user.email}` : "Your session is active."}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <p>Reporting currency: {user?.reporting_currency ?? "—"}</p>
-            <p>
-              Jump to <Link to={routes.transactions}>transactions</Link> or{" "}
-              <Link to={routes.accounts}>accounts</Link> to get started.
-            </p>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>System status</CardTitle>
-            <CardDescription>Backend connectivity check.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {healthQuery.isPending ? <LoadingState title="Checking API" /> : null}
-            {healthQuery.isError ? (
-              <ErrorState
-                error={healthQuery.error}
-                onRetry={() => void healthQuery.refetch()}
-              />
-            ) : null}
-            {healthQuery.isSuccess ? (
-              <Alert variant="success">API health: {healthQuery.data.status}</Alert>
-            ) : null}
-          </CardContent>
-        </Card>
+
+      <SummaryStatsRow />
+      <SummaryStatsLinks />
+
+      <div className="dashboard-layout">
+        <div className="dashboard-layout__primary">
+          <SpendingByCategoryWidget />
+          <RecentTransactionsWidget />
+        </div>
+        <div className="dashboard-layout__secondary">
+          <FinancialInsightsWidget />
+          <BudgetUtilizationWidget />
+          <FinancialGoalsWidget />
+        </div>
       </div>
     </PageContainer>
   );

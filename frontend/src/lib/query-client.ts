@@ -58,8 +58,20 @@ export const queryKeys = {
     root: ["analytics"] as const,
     incomeVsExpenses: (params?: Record<string, unknown>) =>
       ["analytics", "income-vs-expenses", params] as const,
-    cashFlow: (params?: Record<string, unknown>) =>
-      ["analytics", "cash-flow", params] as const,
+    netCashFlow: (params?: Record<string, unknown>) =>
+      ["analytics", "net-cash-flow", params] as const,
+    balanceOverTime: (params?: Record<string, unknown>) =>
+      ["analytics", "balance-over-time", params] as const,
+    savingsRate: (params?: Record<string, unknown>) =>
+      ["analytics", "savings-rate", params] as const,
+    spendingByCategory: (params?: Record<string, unknown>) =>
+      ["analytics", "spending-by-category", params] as const,
+    periodComparison: (params?: Record<string, unknown>) =>
+      ["analytics", "period-comparison", params] as const,
+    largestExpenses: (params?: Record<string, unknown>) =>
+      ["analytics", "largest-expenses", params] as const,
+    budgetUtilization: (params?: Record<string, unknown>) =>
+      ["analytics", "budget-utilization", params] as const,
   },
   notifications: {
     all: ["notifications"] as const,
