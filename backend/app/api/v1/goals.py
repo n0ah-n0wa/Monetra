@@ -6,7 +6,12 @@ from uuid import UUID
 
 from fastapi import APIRouter, Query, status
 
-from app.api.deps import CurrentUserDep, SessionDep, SettingsDep
+from app.api.deps import (
+    CurrentUserDep,
+    NotificationProviderDep,
+    SessionDep,
+    SettingsDep,
+)
 from app.models.enums import GoalStatus
 from app.schemas.goals import (
     GoalCreateRequest,
@@ -25,11 +30,13 @@ async def create_goal(
     payload: GoalCreateRequest,
     session: SessionDep,
     current_user: CurrentUserDep,
+    notification_provider: NotificationProviderDep,
 ) -> GoalResponse:
     goal = await goal_service.create_goal(
         session,
         user_id=current_user.id,
         payload=payload,
+        provider=notification_provider,
     )
     return goal_service.build_goal_response(goal)
 
@@ -122,12 +129,14 @@ async def update_goal(
     payload: GoalUpdateRequest,
     session: SessionDep,
     current_user: CurrentUserDep,
+    notification_provider: NotificationProviderDep,
 ) -> GoalResponse:
     goal = await goal_service.update_goal(
         session,
         user_id=current_user.id,
         goal_id=goal_id,
         payload=payload,
+        provider=notification_provider,
     )
     return goal_service.build_goal_response(goal)
 

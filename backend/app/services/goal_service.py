@@ -15,6 +15,7 @@ from app.domain.goals import (
     build_cumulative_contribution_history,
     compute_goal_progress,
 )
+from app.domain.notifications import NotificationProvider
 from app.domain.transactions import normalize_money
 from app.models.enums import AccountStatus, GoalStatus
 from app.models.financial_goal import FinancialGoal
@@ -31,7 +32,7 @@ from app.schemas.pagination import (
     build_paginated_response,
     pagination_params,
 )
-from app.services import ownership
+from app.services import notification_service, ownership
 
 
 def _goal_status_for_amounts(
@@ -161,6 +162,7 @@ async def create_goal(
     *,
     user_id: uuid.UUID,
     payload: GoalCreateRequest,
+    provider: NotificationProvider | None = None,
 ) -> FinancialGoal:
     target_amount = normalize_money(payload.target_amount)
     current_amount = normalize_money(payload.current_amount)
@@ -188,6 +190,17 @@ async def create_goal(
         target_date=payload.target_date,
         linked_account_id=payload.linked_account_id,
         status=status,
+    )
+    await notification_service.notify_goal_milestones(
+        session,
+        user_id=user_id,
+        goal_id=goal.id,
+        goal_name=goal.name,
+        previous_current=Decimal("0"),
+        previous_target=target_amount,
+        current_amount=current_amount,
+        target_amount=target_amount,
+        provider=provider,
     )
     await session.commit()
     loaded = await goal_repo.get_goal(session, user_id=user_id, goal_id=goal.id)
@@ -247,6 +260,7 @@ async def update_goal(
     user_id: uuid.UUID,
     goal_id: uuid.UUID,
     payload: GoalUpdateRequest,
+    provider: NotificationProvider | None = None,
 ) -> FinancialGoal:
     if (
         payload.name is None
@@ -268,6 +282,9 @@ async def update_goal(
             code="GOAL_ARCHIVED",
             message="Archived goals cannot be modified.",
         )
+
+    previous_current = goal.current_amount
+    previous_target = goal.target_amount
 
     new_currency = payload.currency or goal.currency
     if payload.linked_account_id is not None:
@@ -303,6 +320,18 @@ async def update_goal(
             target_amount=goal.target_amount,
             current_amount=goal.current_amount,
         )
+
+    await notification_service.notify_goal_milestones(
+        session,
+        user_id=user_id,
+        goal_id=goal.id,
+        goal_name=goal.name,
+        previous_current=previous_current,
+        previous_target=previous_target,
+        current_amount=goal.current_amount,
+        target_amount=goal.target_amount,
+        provider=provider,
+    )
 
     await session.commit()
     loaded = await goal_repo.get_goal(session, user_id=user_id, goal_id=goal.id)

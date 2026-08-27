@@ -4,7 +4,8 @@ from datetime import UTC, datetime
 
 import pytest
 from app.core.config import Settings
-from app.domain.notifications import PasswordResetNotification
+from app.domain.notifications import AppNotificationMessage, PasswordResetNotification
+from app.models.enums import NotificationType
 from app.services.notification_providers import (
     InMemoryNotificationProvider,
     NoOpNotificationProvider,
@@ -25,6 +26,20 @@ async def test_in_memory_provider_captures_password_reset() -> None:
 
 
 @pytest.mark.asyncio
+async def test_in_memory_provider_captures_app_notification() -> None:
+    provider = InMemoryNotificationProvider()
+    message = AppNotificationMessage(
+        to_email="user@example.com",
+        notification_type=NotificationType.IMPORT_COMPLETED,
+        title="Import completed",
+        message="done",
+        metadata={"imported_rows": 1},
+    )
+    await provider.send_app_notification(message)
+    assert provider.latest_app_notification() == message
+
+
+@pytest.mark.asyncio
 async def test_no_op_provider_accepts_password_reset() -> None:
     provider = NoOpNotificationProvider()
     await provider.send_password_reset(
@@ -32,6 +47,14 @@ async def test_no_op_provider_accepts_password_reset() -> None:
             to_email="user@example.com",
             reset_token="secret-reset-token",
             expires_at=datetime.now(UTC),
+        ),
+    )
+    await provider.send_app_notification(
+        AppNotificationMessage(
+            to_email="user@example.com",
+            notification_type=NotificationType.GENERAL,
+            title="Hi",
+            message="There",
         ),
     )
 

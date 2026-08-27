@@ -21,6 +21,7 @@ from app.domain.csv_import import (
     parse_csv_content,
     sanitize_upload_filename,
 )
+from app.domain.notifications import NotificationProvider
 from app.domain.transactions import (
     apply_balance_delta,
     category_supports_transaction_type,
@@ -29,6 +30,7 @@ from app.domain.transactions import (
 )
 from app.models.enums import (
     AccountStatus,
+    AuditAction,
     CategoryStatus,
     ImportJobStatus,
     TransactionType,
@@ -48,7 +50,7 @@ from app.schemas.pagination import (
     build_paginated_response,
     pagination_params,
 )
-from app.services import ownership
+from app.services import audit_service, notification_service, ownership
 
 _ALLOWED_CONTENT_TYPES = {
     "text/csv",
@@ -467,6 +469,7 @@ async def confirm_import(
     settings: Settings,
     job_id: uuid.UUID,
     skip_duplicates: bool = True,
+    provider: NotificationProvider | None = None,
 ) -> ImportJobResponse:
     job = await import_repo.get_import_job_for_update(
         session,
@@ -625,6 +628,27 @@ async def confirm_import(
         job.skipped_rows = len(skipped)
         job.duplicate_rows = max(job.duplicate_rows, len(skipped))
         import_repo.mark_completed(job, status=ImportJobStatus.COMPLETED)
+        await notification_service.notify_import_completed(
+            session,
+            user_id=user_id,
+            job_id=job.id,
+            imported_rows=imported,
+            provider=provider,
+        )
+        await audit_service.record_event(
+            session,
+            actor_id=user_id,
+            action=AuditAction.IMPORT_EXECUTED,
+            entity_type=audit_service.ENTITY_IMPORT_JOB,
+            entity_id=job.id,
+            metadata={
+                "status": ImportJobStatus.COMPLETED.value,
+                "target_account_id": str(job.target_account_id),
+                "imported_rows": imported,
+                "skipped_rows": len(skipped),
+                "total_rows": job.total_rows,
+            },
+        )
         await session.commit()
     except Exception as exc:
         await session.rollback()
@@ -636,8 +660,9 @@ async def confirm_import(
         )
         if failed is not None:
             details = dict(_payload(failed))
+            error_code = str(getattr(exc, "code", "IMPORT_FAILED"))
             details["failure"] = {
-                "code": getattr(exc, "code", "IMPORT_FAILED"),
+                "code": error_code,
                 "message": str(getattr(exc, "message", exc)),
             }
             import_repo.mark_completed(
@@ -646,6 +671,13 @@ async def confirm_import(
                 error_details=details,
             )
             failed.imported_rows = 0
+            await notification_service.notify_import_failed(
+                session,
+                user_id=user_id,
+                job_id=job_id,
+                error_code=error_code,
+                provider=provider,
+            )
             await session.commit()
             await session.refresh(failed)
             if isinstance(exc, (ValidationAppError, NotFoundError, ConflictError)):

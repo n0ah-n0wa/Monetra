@@ -4,7 +4,11 @@ from __future__ import annotations
 
 from app.core.config import Settings
 from app.core.logging import get_logger
-from app.domain.notifications import NotificationProvider, PasswordResetNotification
+from app.domain.notifications import (
+    AppNotificationMessage,
+    NotificationProvider,
+    PasswordResetNotification,
+)
 
 logger = get_logger(__name__)
 
@@ -14,6 +18,7 @@ class InMemoryNotificationProvider:
 
     def __init__(self) -> None:
         self.password_resets: list[PasswordResetNotification] = []
+        self.app_notifications: list[AppNotificationMessage] = []
 
     async def send_password_reset(
         self,
@@ -21,13 +26,25 @@ class InMemoryNotificationProvider:
     ) -> None:
         self.password_resets.append(notification)
 
+    async def send_app_notification(
+        self,
+        notification: AppNotificationMessage,
+    ) -> None:
+        self.app_notifications.append(notification)
+
     def clear(self) -> None:
         self.password_resets.clear()
+        self.app_notifications.clear()
 
     def latest_password_reset(self) -> PasswordResetNotification | None:
         if not self.password_resets:
             return None
         return self.password_resets[-1]
+
+    def latest_app_notification(self) -> AppNotificationMessage | None:
+        if not self.app_notifications:
+            return None
+        return self.app_notifications[-1]
 
 
 class NoOpNotificationProvider:
@@ -40,6 +57,16 @@ class NoOpNotificationProvider:
         logger.info(
             "event=password_reset_email_queued recipient=%s",
             notification.to_email,
+        )
+
+    async def send_app_notification(
+        self,
+        notification: AppNotificationMessage,
+    ) -> None:
+        logger.info(
+            "event=app_notification_email_queued recipient=%s type=%s",
+            notification.to_email,
+            notification.notification_type.value,
         )
 
 

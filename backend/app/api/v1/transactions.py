@@ -7,7 +7,12 @@ from uuid import UUID
 
 from fastapi import APIRouter, Query, Response, status
 
-from app.api.deps import CurrentUserDep, SessionDep, SettingsDep
+from app.api.deps import (
+    CurrentUserDep,
+    NotificationProviderDep,
+    SessionDep,
+    SettingsDep,
+)
 from app.models.enums import TransactionType
 from app.models.transaction import Transaction
 from app.schemas.mappers import format_datetime
@@ -49,11 +54,13 @@ async def create_transaction(
     payload: TransactionCreateRequest,
     session: SessionDep,
     current_user: CurrentUserDep,
+    notification_provider: NotificationProviderDep,
 ) -> TransactionResponse:
     transaction = await transaction_service.create_transaction(
         session,
         user_id=current_user.id,
         payload=payload,
+        provider=notification_provider,
     )
     return _to_transaction_response(transaction)
 
@@ -125,12 +132,14 @@ async def update_transaction(
     payload: TransactionUpdateRequest,
     session: SessionDep,
     current_user: CurrentUserDep,
+    notification_provider: NotificationProviderDep,
 ) -> TransactionResponse:
     transaction = await transaction_service.update_transaction(
         session,
         user_id=current_user.id,
         transaction_id=transaction_id,
         payload=payload,
+        provider=notification_provider,
     )
     return _to_transaction_response(transaction)
 
@@ -140,10 +149,12 @@ async def delete_transaction(
     transaction_id: UUID,
     session: SessionDep,
     current_user: CurrentUserDep,
+    notification_provider: NotificationProviderDep,
 ) -> Response:
     await transaction_service.delete_transaction(
         session,
         user_id=current_user.id,
         transaction_id=transaction_id,
+        provider=notification_provider,
     )
     return Response(status_code=status.HTTP_204_NO_CONTENT)

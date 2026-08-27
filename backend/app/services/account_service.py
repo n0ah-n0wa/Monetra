@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import Settings
 from app.core.exceptions import ConflictError, ValidationAppError
 from app.domain.transactions import normalize_money
-from app.models.enums import AccountStatus
+from app.models.enums import AccountStatus, AuditAction
 from app.models.financial_account import FinancialAccount
 from app.repositories import account_repository as account_repo
 from app.schemas.accounts import AccountCreateRequest, AccountUpdateRequest
@@ -19,7 +19,7 @@ from app.schemas.pagination import (
     build_paginated_response,
     pagination_params,
 )
-from app.services import ownership
+from app.services import audit_service, ownership
 
 
 async def create_account(
@@ -143,6 +143,18 @@ async def archive_account(
     )
     if account.status != AccountStatus.ARCHIVED:
         await account_repo.archive_account(session, account)
+        await audit_service.record_event(
+            session,
+            actor_id=user_id,
+            action=AuditAction.ARCHIVED,
+            entity_type=audit_service.ENTITY_ACCOUNT,
+            entity_id=account.id,
+            metadata={
+                "name": account.name,
+                "currency": account.currency,
+                "account_type": account.account_type.value,
+            },
+        )
         await session.commit()
         await session.refresh(account)
     return account

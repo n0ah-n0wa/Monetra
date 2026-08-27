@@ -15,7 +15,7 @@ from app.domain.transfers import (
     assert_sufficient_balance,
     resolve_transfer_amounts,
 )
-from app.models.enums import AccountStatus
+from app.models.enums import AccountStatus, AuditAction
 from app.models.financial_account import FinancialAccount
 from app.models.transfer import Transfer
 from app.repositories import transaction_repository as transaction_repo
@@ -26,6 +26,7 @@ from app.schemas.pagination import (
     pagination_params,
 )
 from app.schemas.transfers import TransferCreateRequest
+from app.services import audit_service
 
 
 def _transfer_matches_request(
@@ -161,6 +162,23 @@ async def create_transfer(
             transaction_date=payload.transaction_date,
             description=payload.description.strip() if payload.description else None,
             idempotency_key=payload.idempotency_key,
+        )
+        await audit_service.record_event(
+            session,
+            actor_id=user_id,
+            action=AuditAction.CREATED,
+            entity_type=audit_service.ENTITY_TRANSFER,
+            entity_id=transfer.id,
+            metadata={
+                "source_account_id": str(transfer.source_account_id),
+                "destination_account_id": str(transfer.destination_account_id),
+                "source_amount": transfer.source_amount,
+                "source_currency": transfer.source_currency,
+                "destination_amount": transfer.destination_amount,
+                "destination_currency": transfer.destination_currency,
+                "exchange_rate": transfer.exchange_rate,
+                "transaction_date": transfer.transaction_date,
+            },
         )
         await session.commit()
     except IntegrityError as exc:

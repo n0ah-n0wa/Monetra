@@ -19,6 +19,7 @@ if TYPE_CHECKING:
     from app.models.financial_goal import FinancialGoal
     from app.models.import_job import ImportJob
     from app.models.notification import Notification
+    from app.models.notification_preference import NotificationPreference
     from app.models.password_reset_token import PasswordResetToken
     from app.models.recurring_transaction import RecurringTransaction
     from app.models.refresh_token import RefreshToken
@@ -56,6 +57,10 @@ class User(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         back_populates="user",
     )
     notifications: Mapped[list[Notification]] = relationship(back_populates="user")
+    notification_preference: Mapped[NotificationPreference | None] = relationship(
+        back_populates="user",
+        uselist=False,
+    )
     import_jobs: Mapped[list[ImportJob]] = relationship(back_populates="user")
     audit_events: Mapped[list[AuditEvent]] = relationship(
         back_populates="actor",

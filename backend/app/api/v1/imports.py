@@ -7,7 +7,12 @@ from uuid import UUID
 
 from fastapi import APIRouter, File, Form, Query, UploadFile, status
 
-from app.api.deps import CurrentUserDep, SessionDep, SettingsDep
+from app.api.deps import (
+    CurrentUserDep,
+    NotificationProviderDep,
+    SessionDep,
+    SettingsDep,
+)
 from app.schemas.imports import ImportConfirmRequest, ImportJobResponse
 from app.schemas.pagination import PaginatedResponse
 from app.services import import_service
@@ -76,6 +81,7 @@ async def confirm_import(
     session: SessionDep,
     settings: SettingsDep,
     current_user: CurrentUserDep,
+    notification_provider: NotificationProviderDep,
     payload: ImportConfirmRequest | None = None,
 ) -> ImportJobResponse:
     request = payload or ImportConfirmRequest()
@@ -85,4 +91,5 @@ async def confirm_import(
         settings=settings,
         job_id=job_id,
         skip_duplicates=request.skip_duplicates,
+        provider=notification_provider,
     )

@@ -103,6 +103,14 @@ def custom_openapi(application: FastAPI, settings: Settings) -> dict[str, object
                 "description": "CSV export of owned financial data.",
             },
             {
+                "name": "notifications",
+                "description": "In-app notifications and delivery preferences.",
+            },
+            {
+                "name": "audit",
+                "description": "Actor-scoped financial audit event trail.",
+            },
+            {
                 "name": "transactions",
                 "description": "Income and expense transaction management.",
             },

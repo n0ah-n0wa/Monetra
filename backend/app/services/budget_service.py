@@ -17,7 +17,13 @@ from app.domain.budgets import (
 )
 from app.domain.transactions import normalize_money
 from app.models.budget import Budget
-from app.models.enums import BudgetPeriod, BudgetScope, CategoryStatus, CategoryType
+from app.models.enums import (
+    AuditAction,
+    BudgetPeriod,
+    BudgetScope,
+    CategoryStatus,
+    CategoryType,
+)
 from app.repositories import budget_repository as budget_repo
 from app.schemas.budgets import (
     BudgetAnalyticsItem,
@@ -34,7 +40,7 @@ from app.schemas.pagination import (
     build_paginated_response,
     pagination_params,
 )
-from app.services import ownership
+from app.services import audit_service, ownership
 
 
 async def _validate_budget_categories(
@@ -167,6 +173,21 @@ async def create_budget(
             end_date=payload.end_date,
             warning_threshold_percent=payload.warning_threshold_percent,
             category_ids=payload.category_ids,
+        )
+        await audit_service.record_event(
+            session,
+            actor_id=user_id,
+            action=AuditAction.CREATED,
+            entity_type=audit_service.ENTITY_BUDGET,
+            entity_id=budget.id,
+            metadata={
+                "name": budget.name,
+                "amount": budget.amount,
+                "currency": budget.currency,
+                "period": budget.period.value,
+                "scope": budget.scope.value,
+                "category_ids": [str(cid) for cid in payload.category_ids],
+            },
         )
         await session.commit()
     except IntegrityError as exc:
@@ -328,6 +349,22 @@ async def update_budget(
             message="Category budgets require at least one category_id.",
         )
 
+    await audit_service.record_event(
+        session,
+        actor_id=user_id,
+        action=AuditAction.UPDATED,
+        entity_type=audit_service.ENTITY_BUDGET,
+        entity_id=budget.id,
+        metadata={
+            "name": budget.name,
+            "amount": budget.amount,
+            "currency": budget.currency,
+            "period": budget.period.value,
+            "scope": budget.scope.value,
+            "warning_threshold_percent": budget.warning_threshold_percent,
+            "category_ids": [str(category.id) for category in budget.categories],
+        },
+    )
     await session.commit()
     loaded = await budget_repo.get_budget(
         session,
@@ -347,6 +384,18 @@ async def archive_budget(
     budget = await get_budget(session, user_id=user_id, budget_id=budget_id)
     if budget.archived_at is None:
         await budget_repo.archive_budget(session, budget)
+        await audit_service.record_event(
+            session,
+            actor_id=user_id,
+            action=AuditAction.ARCHIVED,
+            entity_type=audit_service.ENTITY_BUDGET,
+            entity_id=budget.id,
+            metadata={
+                "name": budget.name,
+                "amount": budget.amount,
+                "currency": budget.currency,
+            },
+        )
         await session.commit()
         await session.refresh(budget)
     return budget

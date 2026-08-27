@@ -9,6 +9,7 @@ from app.models.financial_account import FinancialAccount
 from app.models.financial_goal import FinancialGoal
 from app.models.import_job import ImportJob
 from app.models.notification import Notification
+from app.models.notification_preference import NotificationPreference
 from app.models.password_reset_token import PasswordResetToken
 from app.models.recurring_transaction import RecurringTransaction
 from app.models.recurring_transaction_execution import RecurringTransactionExecution
@@ -27,6 +28,7 @@ __all__ = [
     "FinancialGoal",
     "ImportJob",
     "Notification",
+    "NotificationPreference",
     "PasswordResetToken",
     "RecurringTransaction",
     "RecurringTransactionExecution",

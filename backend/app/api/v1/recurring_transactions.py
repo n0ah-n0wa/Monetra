@@ -5,7 +5,12 @@ from uuid import UUID
 
 from fastapi import APIRouter, Query, status
 
-from app.api.deps import CurrentUserDep, SessionDep, SettingsDep
+from app.api.deps import (
+    CurrentUserDep,
+    NotificationProviderDep,
+    SessionDep,
+    SettingsDep,
+)
 from app.models.recurring_transaction import RecurringTransaction
 from app.schemas.mappers import format_datetime
 from app.schemas.pagination import PaginatedResponse
@@ -135,6 +140,7 @@ async def archive_recurring_transaction(
 async def process_due_recurring_transactions(
     session: SessionDep,
     current_user: CurrentUserDep,
+    notification_provider: NotificationProviderDep,
     payload: ProcessDueRecurringRequest | None = None,
 ) -> ProcessDueRecurringResponse:
     """Execute due recurring definitions for the authenticated user."""
@@ -143,4 +149,5 @@ async def process_due_recurring_transactions(
         session,
         user_id=current_user.id,
         as_of_date=request.as_of_date,
+        provider=notification_provider,
     )

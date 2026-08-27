@@ -11,6 +11,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.config import Settings
 from app.core.exceptions import NotFoundError, ValidationAppError
 from app.domain.currency import normalize_currency
+from app.domain.notifications import NotificationProvider
 from app.domain.transactions import (
     apply_balance_delta,
     category_supports_transaction_type,
@@ -20,7 +21,12 @@ from app.domain.transactions import (
     validate_positive_amount,
 )
 from app.models.category import Category
-from app.models.enums import AccountStatus, CategoryStatus, TransactionType
+from app.models.enums import (
+    AccountStatus,
+    AuditAction,
+    CategoryStatus,
+    TransactionType,
+)
 from app.models.financial_account import FinancialAccount
 from app.models.transaction import Transaction
 from app.repositories import transaction_repository as transaction_repo
@@ -35,7 +41,7 @@ from app.schemas.transactions import (
     TransactionSortField,
     TransactionUpdateRequest,
 )
-from app.services import ownership
+from app.services import audit_service, notification_service, ownership
 
 
 def _is_balance_affecting_update(
@@ -123,6 +129,7 @@ async def create_transaction(
     *,
     user_id: uuid.UUID,
     payload: TransactionCreateRequest,
+    provider: NotificationProvider | None = None,
 ) -> Transaction:
     amount = validate_positive_amount(payload.amount)
     await _validate_category_for_transaction(
@@ -159,6 +166,28 @@ async def create_transaction(
         description=payload.description.strip(),
         transaction_date=payload.transaction_date,
         notes=payload.notes,
+    )
+    if payload.transaction_type == TransactionType.EXPENSE:
+        await notification_service.evaluate_budgets_after_expense(
+            session,
+            user_id=user_id,
+            as_of_date=payload.transaction_date,
+            provider=provider,
+        )
+    await audit_service.record_event(
+        session,
+        actor_id=user_id,
+        action=AuditAction.CREATED,
+        entity_type=audit_service.ENTITY_TRANSACTION,
+        entity_id=transaction.id,
+        metadata={
+            "account_id": str(transaction.account_id),
+            "category_id": str(transaction.category_id),
+            "transaction_type": transaction.transaction_type.value,
+            "amount": transaction.amount,
+            "currency": transaction.currency,
+            "transaction_date": transaction.transaction_date,
+        },
     )
     await session.commit()
     await session.refresh(transaction)
@@ -279,6 +308,7 @@ async def update_transaction(
     user_id: uuid.UUID,
     transaction_id: uuid.UUID,
     payload: TransactionUpdateRequest,
+    provider: NotificationProvider | None = None,
 ) -> Transaction:
     if (
         payload.account_id is None
@@ -384,6 +414,29 @@ async def update_transaction(
     transaction.transaction_date = new_date
     transaction.notes = new_notes
 
+    if new_type == TransactionType.EXPENSE:
+        await notification_service.evaluate_budgets_after_expense(
+            session,
+            user_id=user_id,
+            as_of_date=new_date,
+            provider=provider,
+        )
+
+    await audit_service.record_event(
+        session,
+        actor_id=user_id,
+        action=AuditAction.UPDATED,
+        entity_type=audit_service.ENTITY_TRANSACTION,
+        entity_id=transaction.id,
+        metadata={
+            "account_id": str(transaction.account_id),
+            "category_id": str(transaction.category_id),
+            "transaction_type": transaction.transaction_type.value,
+            "amount": transaction.amount,
+            "currency": transaction.currency,
+            "transaction_date": transaction.transaction_date,
+        },
+    )
     await session.commit()
     await session.refresh(transaction)
     return transaction
@@ -394,6 +447,7 @@ async def delete_transaction(
     *,
     user_id: uuid.UUID,
     transaction_id: uuid.UUID,
+    provider: NotificationProvider | None = None,
 ) -> None:
     transaction = await transaction_repo.get_active_transaction_for_update(
         session,
@@ -410,10 +464,36 @@ async def delete_transaction(
         transaction.transaction_type,
         transaction.amount,
     )
+    as_of = transaction.transaction_date
+    was_expense = transaction.transaction_type == TransactionType.EXPENSE
+    deleted_id = transaction.id
+    deleted_meta = {
+        "account_id": str(transaction.account_id),
+        "category_id": str(transaction.category_id),
+        "transaction_type": transaction.transaction_type.value,
+        "amount": transaction.amount,
+        "currency": transaction.currency,
+        "transaction_date": transaction.transaction_date,
+    }
     await _lock_and_apply_balance_adjustments(
         session,
         user_id=user_id,
         adjustments={transaction.account_id: delta},
     )
     await transaction_repo.soft_delete_transaction(session, transaction)
+    if was_expense:
+        await notification_service.evaluate_budgets_after_expense(
+            session,
+            user_id=user_id,
+            as_of_date=as_of,
+            provider=provider,
+        )
+    await audit_service.record_event(
+        session,
+        actor_id=user_id,
+        action=AuditAction.DELETED,
+        entity_type=audit_service.ENTITY_TRANSACTION,
+        entity_id=deleted_id,
+        metadata=deleted_meta,
+    )
     await session.commit()

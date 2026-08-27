@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import Settings
 from app.core.exceptions import ConflictError, NotFoundError, ValidationAppError
+from app.domain.notifications import NotificationProvider
 from app.domain.recurring import (
     advance_execution_date,
     advance_next_execution_pointer,
@@ -42,7 +43,7 @@ from app.schemas.recurring_transactions import (
     RecurringTransactionCreateRequest,
     RecurringTransactionUpdateRequest,
 )
-from app.services import ownership
+from app.services import notification_service, ownership
 
 
 async def _validate_category_for_recurring(
@@ -337,6 +338,7 @@ async def _execute_recurring_on_date(
     *,
     recurring: RecurringTransaction,
     execution_date: date,
+    provider: NotificationProvider | None = None,
 ) -> tuple[uuid.UUID, bool]:
     """Execute one schedule date. Returns transaction id and whether it was created."""
     execution = await recurring_repo.get_execution_for_update(
@@ -413,6 +415,22 @@ async def _execute_recurring_on_date(
 
     execution.transaction_id = transaction.id
     await session.flush()
+    await notification_service.notify_recurring_executed(
+        session,
+        user_id=recurring.user_id,
+        recurring_id=recurring.id,
+        transaction_id=transaction.id,
+        execution_date=execution_date,
+        description=recurring.description,
+        provider=provider,
+    )
+    if recurring.transaction_type == TransactionType.EXPENSE:
+        await notification_service.evaluate_budgets_after_expense(
+            session,
+            user_id=recurring.user_id,
+            as_of_date=execution_date,
+            provider=provider,
+        )
     return transaction.id, True
 
 
@@ -421,6 +439,7 @@ async def _process_recurring_definition(
     *,
     recurring: RecurringTransaction,
     as_of_date: date,
+    provider: NotificationProvider | None = None,
 ) -> list[RecurringExecutionResult]:
     if not recurring.is_active:
         return []
@@ -444,6 +463,7 @@ async def _process_recurring_definition(
             session,
             recurring=recurring,
             execution_date=execution_date,
+            provider=provider,
         )
         results.append(
             RecurringExecutionResult(
@@ -485,6 +505,7 @@ async def process_due_recurring_transactions_for_user(
     *,
     user_id: uuid.UUID,
     as_of_date: date | None = None,
+    provider: NotificationProvider | None = None,
 ) -> ProcessDueRecurringResponse:
     """Process all due recurring definitions for one user (scheduler entry point)."""
     effective_date = as_of_date or datetime.now(UTC).date()
@@ -501,6 +522,7 @@ async def process_due_recurring_transactions_for_user(
                 session,
                 recurring=recurring,
                 as_of_date=effective_date,
+                provider=provider,
             ),
         )
 
@@ -515,6 +537,7 @@ async def process_due_recurring_transactions(
     session: AsyncSession,
     *,
     as_of_date: date | None = None,
+    provider: NotificationProvider | None = None,
 ) -> ProcessDueRecurringResponse:
     """Process all due recurring definitions across users (background worker hook)."""
     effective_date = as_of_date or datetime.now(UTC).date()
@@ -530,6 +553,7 @@ async def process_due_recurring_transactions(
                 session,
                 recurring=recurring,
                 as_of_date=effective_date,
+                provider=provider,
             ),
         )
 
