@@ -13,10 +13,12 @@ import { useCategoriesQuery } from "@/features/categories/hooks";
 import {
   TransactionFilters,
   TransactionPagination,
+} from "@/features/transactions/components/TransactionFilters";
+import {
   defaultTransactionFilters,
   filtersToQueryParams,
   type TransactionFilterState,
-} from "@/features/transactions/components/TransactionFilters";
+} from "@/features/transactions/transaction-filter-state";
 import { TransactionList } from "@/features/transactions/components/TransactionList";
 import type { Transaction } from "@/features/transactions/api";
 import {

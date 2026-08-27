@@ -138,7 +138,9 @@ describe("NotificationsPage", () => {
     ).toBeInTheDocument();
     expect(await screen.findByText("1 unread notification")).toBeInTheDocument();
     expect(screen.getByText("Budget nearing limit")).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Import completed" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("heading", { name: "Import completed" }),
+    ).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Inbox" })).toBeInTheDocument();
     expect(screen.getByRole("checkbox", { name: /budget warnings/i })).toBeChecked();
   });

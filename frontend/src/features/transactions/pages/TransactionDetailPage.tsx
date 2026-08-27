@@ -17,10 +17,8 @@ import {
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useAccountsQuery } from "@/features/accounts/hooks";
 import { useCategoriesQuery } from "@/features/categories/hooks";
-import {
-  TransactionForm,
-  transactionFormToUpdatePayload,
-} from "@/features/transactions/components/TransactionForm";
+import { TransactionForm } from "@/features/transactions/components/TransactionForm";
+import { transactionFormToUpdatePayload } from "@/features/transactions/transaction-form-payload";
 import { formatTransactionType } from "@/features/transactions/api";
 import {
   useDeleteTransactionMutation,

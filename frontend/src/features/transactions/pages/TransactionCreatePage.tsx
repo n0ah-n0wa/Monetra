@@ -7,10 +7,8 @@ import { LoadingState } from "@/components/states/LoadingState";
 import { Alert } from "@/components/ui/Alert";
 import { useAccountsQuery } from "@/features/accounts/hooks";
 import { useCategoriesQuery } from "@/features/categories/hooks";
-import {
-  TransactionForm,
-  transactionFormToCreatePayload,
-} from "@/features/transactions/components/TransactionForm";
+import { TransactionForm } from "@/features/transactions/components/TransactionForm";
+import { transactionFormToCreatePayload } from "@/features/transactions/transaction-form-payload";
 import { useCreateTransactionMutation } from "@/features/transactions/hooks";
 import { routes } from "@/lib/routes";
 

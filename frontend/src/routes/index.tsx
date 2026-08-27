@@ -1,8 +1,7 @@
-import { lazy, Suspense } from "react";
 import { Navigate, createBrowserRouter } from "react-router-dom";
 import { AppShell } from "@/components/layout/AppShell";
-import { LoadingState } from "@/components/states/LoadingState";
 import { GuestRoute, ProtectedRoute } from "@/components/routing/ProtectedRoute";
+import { AnalyticsRoute } from "@/routes/AnalyticsRoute";
 import { AccountDetailPage } from "@/features/accounts/pages/AccountDetailPage";
 import { AccountsPage } from "@/features/accounts/pages/AccountsPage";
 import { ForgotPasswordPage } from "@/features/auth/pages/ForgotPasswordPage";
@@ -25,20 +24,6 @@ import { TransactionsPage } from "@/features/transactions/pages/TransactionsPage
 import { routes } from "@/lib/routes";
 import { DashboardPage } from "@/pages/DashboardPage";
 import { NotFoundPage } from "@/pages/NotFoundPage";
-
-const AnalyticsPage = lazy(() =>
-  import("@/features/analytics/pages/AnalyticsPage").then((module) => ({
-    default: module.AnalyticsPage,
-  })),
-);
-
-function AnalyticsRoute() {
-  return (
-    <Suspense fallback={<LoadingState title="Loading analytics" />}>
-      <AnalyticsPage />
-    </Suspense>
-  );
-}
 
 export const router = createBrowserRouter([
   {
