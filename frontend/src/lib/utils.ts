@@ -2,7 +2,11 @@ export function cn(...classes: Array<string | false | null | undefined>): string
   return classes.filter(Boolean).join(" ");
 }
 
-export function formatCurrency(amount: string, currency: string, locale = "en-US"): string {
+export function formatCurrency(
+  amount: string,
+  currency: string,
+  locale = "en-US",
+): string {
   const value = Number(amount);
   if (Number.isNaN(value)) {
     return `${amount} ${currency}`;

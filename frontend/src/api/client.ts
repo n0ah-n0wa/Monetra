@@ -24,7 +24,9 @@ export function getAccessToken(): string | null {
   return accessToken;
 }
 
-export function setTokenRefreshHandler(handler: (() => Promise<string | null>) | null): void {
+export function setTokenRefreshHandler(
+  handler: (() => Promise<string | null>) | null,
+): void {
   refreshHandler = handler;
 }
 
@@ -58,7 +60,11 @@ function buildHeaders(options: RequestOptions): HeadersInit {
   return headers;
 }
 
-async function request<T>(path: string, options: RequestOptions = {}, allowRetry = true): Promise<T> {
+async function request<T>(
+  path: string,
+  options: RequestOptions = {},
+  allowRetry = true,
+): Promise<T> {
   const response = await fetch(`${API_BASE_URL}${API_PREFIX}${path}`, {
     method: options.method ?? "GET",
     headers: buildHeaders(options),
@@ -67,7 +73,12 @@ async function request<T>(path: string, options: RequestOptions = {}, allowRetry
     signal: options.signal,
   });
 
-  if (response.status === 401 && allowRetry && options.auth !== false && refreshHandler) {
+  if (
+    response.status === 401 &&
+    allowRetry &&
+    options.auth !== false &&
+    refreshHandler
+  ) {
     const newToken = await refreshHandler();
     if (newToken) {
       return request<T>(path, options, false);
@@ -88,24 +99,42 @@ export const apiClient = {
     return request<T>(path, { ...options, method: "GET" });
   },
 
-  post<T>(path: string, body?: unknown, options?: Omit<RequestOptions, "method" | "body">): Promise<T> {
+  post<T>(
+    path: string,
+    body?: unknown,
+    options?: Omit<RequestOptions, "method" | "body">,
+  ): Promise<T> {
     return request<T>(path, { ...options, method: "POST", body });
   },
 
-  patch<T>(path: string, body?: unknown, options?: Omit<RequestOptions, "method" | "body">): Promise<T> {
+  patch<T>(
+    path: string,
+    body?: unknown,
+    options?: Omit<RequestOptions, "method" | "body">,
+  ): Promise<T> {
     return request<T>(path, { ...options, method: "PATCH", body });
   },
 
-  put<T>(path: string, body?: unknown, options?: Omit<RequestOptions, "method" | "body">): Promise<T> {
+  put<T>(
+    path: string,
+    body?: unknown,
+    options?: Omit<RequestOptions, "method" | "body">,
+  ): Promise<T> {
     return request<T>(path, { ...options, method: "PUT", body });
   },
 
-  delete<T = void>(path: string, options?: Omit<RequestOptions, "method" | "body">): Promise<T> {
+  delete<T = void>(
+    path: string,
+    options?: Omit<RequestOptions, "method" | "body">,
+  ): Promise<T> {
     return request<T>(path, { ...options, method: "DELETE" });
   },
 };
 
-export async function requestWithoutAuth<T>(path: string, options: RequestOptions = {}): Promise<T> {
+export async function requestWithoutAuth<T>(
+  path: string,
+  options: RequestOptions = {},
+): Promise<T> {
   return request<T>(path, { ...options, auth: false }, false);
 }
 

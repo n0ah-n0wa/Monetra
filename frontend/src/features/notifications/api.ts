@@ -33,7 +33,9 @@ export type NotificationListParams = {
 export async function fetchNotifications(
   params: NotificationListParams = {},
 ): Promise<PaginatedResponse<Notification>> {
-  return apiClient.get<PaginatedResponse<Notification>>(`/notifications${toSearchParams(params)}`);
+  return apiClient.get<PaginatedResponse<Notification>>(
+    `/notifications${toSearchParams(params)}`,
+  );
 }
 
 export async function fetchNotificationPreferences(): Promise<NotificationPreferences> {

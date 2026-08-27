@@ -51,7 +51,9 @@ export async function requestPasswordReset(
   });
 }
 
-export async function confirmPasswordReset(payload: PasswordResetConfirmPayload): Promise<void> {
+export async function confirmPasswordReset(
+  payload: PasswordResetConfirmPayload,
+): Promise<void> {
   await requestWithoutAuth<void>("/auth/password-reset/confirm", {
     method: "POST",
     body: payload,
@@ -62,6 +64,8 @@ export async function fetchCurrentUser(): Promise<User> {
   return apiClient.get<User>("/users/me");
 }
 
-export async function updateCurrentUser(payload: { reporting_currency: string }): Promise<User> {
+export async function updateCurrentUser(payload: {
+  reporting_currency: string;
+}): Promise<User> {
   return apiClient.patch<User>("/users/me", payload);
 }

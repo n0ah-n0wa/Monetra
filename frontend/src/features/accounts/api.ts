@@ -19,8 +19,12 @@ export type AccountListParams = {
   status?: string;
 };
 
-export async function fetchAccounts(params: AccountListParams = {}): Promise<PaginatedResponse<Account>> {
-  return apiClient.get<PaginatedResponse<Account>>(`/accounts${toSearchParams(params)}`);
+export async function fetchAccounts(
+  params: AccountListParams = {},
+): Promise<PaginatedResponse<Account>> {
+  return apiClient.get<PaginatedResponse<Account>>(
+    `/accounts${toSearchParams(params)}`,
+  );
 }
 
 export async function fetchAccount(id: string): Promise<Account> {

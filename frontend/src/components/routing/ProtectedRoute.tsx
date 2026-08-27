@@ -8,7 +8,9 @@ export function ProtectedRoute() {
   const location = useLocation();
 
   if (isBootstrapping) {
-    return <LoadingState title="Starting Monetra" description="Restoring your session…" />;
+    return (
+      <LoadingState title="Starting Monetra" description="Restoring your session…" />
+    );
   }
 
   if (!isAuthenticated) {
@@ -25,7 +27,9 @@ export function GuestRoute() {
     (location.state as { from?: string } | null)?.from ?? routes.dashboard;
 
   if (isBootstrapping) {
-    return <LoadingState title="Starting Monetra" description="Checking your session…" />;
+    return (
+      <LoadingState title="Starting Monetra" description="Checking your session…" />
+    );
   }
 
   if (isAuthenticated) {

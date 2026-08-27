@@ -5,10 +5,19 @@ import { FormField } from "@/components/forms/FormField";
 import { AuthLayout } from "@/components/layout/AppShell";
 import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import * as authApi from "@/features/auth/api";
-import { resetPasswordSchema, type ResetPasswordFormValues } from "@/features/auth/schemas";
+import {
+  resetPasswordSchema,
+  type ResetPasswordFormValues,
+} from "@/features/auth/schemas";
 import { useZodForm } from "@/lib/form";
 import { routes } from "@/lib/routes";
 
@@ -40,7 +49,9 @@ export function ResetPasswordPage() {
       <Card>
         <CardHeader>
           <CardTitle>Choose a new password</CardTitle>
-          <CardDescription>Enter the reset token and your new password.</CardDescription>
+          <CardDescription>
+            Enter the reset token and your new password.
+          </CardDescription>
         </CardHeader>
         <CardContent>
           {mutation.isSuccess ? (
@@ -48,8 +59,17 @@ export function ResetPasswordPage() {
               Your password has been reset. You can now sign in.
             </Alert>
           ) : (
-            <form className="stack" onSubmit={(event) => void onSubmit(event)} noValidate>
-              <FormField id="token" label="Reset token" required error={form.formState.errors.token}>
+            <form
+              className="stack"
+              onSubmit={(event) => void onSubmit(event)}
+              noValidate
+            >
+              <FormField
+                id="token"
+                label="Reset token"
+                required
+                error={form.formState.errors.token}
+              >
                 <Input
                   id="token"
                   autoComplete="one-time-code"

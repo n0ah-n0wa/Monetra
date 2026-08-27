@@ -16,7 +16,9 @@ export type GoalListParams = {
   page_size?: number;
 };
 
-export async function fetchGoals(params: GoalListParams = {}): Promise<PaginatedResponse<Goal>> {
+export async function fetchGoals(
+  params: GoalListParams = {},
+): Promise<PaginatedResponse<Goal>> {
   return apiClient.get<PaginatedResponse<Goal>>(`/goals${toSearchParams(params)}`);
 }
 

@@ -19,9 +19,14 @@ export function BudgetsPage() {
       description="Set spending limits and monitor utilization over time."
     >
       {query.isPending ? <LoadingState title="Loading budgets" /> : null}
-      {query.isError ? <ErrorState error={query.error} onRetry={() => void query.refetch()} /> : null}
+      {query.isError ? (
+        <ErrorState error={query.error} onRetry={() => void query.refetch()} />
+      ) : null}
       {query.isSuccess && query.data.total_items === 0 ? (
-        <EmptyState title="No budgets yet" description="Create a budget to track spending targets." />
+        <EmptyState
+          title="No budgets yet"
+          description="Create a budget to track spending targets."
+        />
       ) : null}
       {query.isSuccess && query.data.total_items > 0 ? (
         <p>{query.data.total_items} active budget(s).</p>

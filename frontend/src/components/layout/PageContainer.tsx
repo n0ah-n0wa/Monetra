@@ -6,5 +6,11 @@ type PageContainerProps = {
 };
 
 export function PageContainer({ children, narrow = false }: PageContainerProps) {
-  return <div className={narrow ? "page-container page-container--narrow" : "page-container"}>{children}</div>;
+  return (
+    <div
+      className={narrow ? "page-container page-container--narrow" : "page-container"}
+    >
+      {children}
+    </div>
+  );
 }

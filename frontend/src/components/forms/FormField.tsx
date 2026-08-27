@@ -35,7 +35,11 @@ export function FormField({
           {description}
         </p>
       ) : null}
-      <div aria-describedby={[descriptionId, errorId].filter(Boolean).join(" ") || undefined}>
+      <div
+        aria-describedby={
+          [descriptionId, errorId].filter(Boolean).join(" ") || undefined
+        }
+      >
         {children}
       </div>
       {error ? (

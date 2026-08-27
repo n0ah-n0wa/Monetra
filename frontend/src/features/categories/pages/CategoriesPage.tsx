@@ -18,7 +18,9 @@ export function CategoriesPage() {
       description="Organize spending and income with reusable categories."
     >
       {query.isPending ? <LoadingState title="Loading categories" /> : null}
-      {query.isError ? <ErrorState error={query.error} onRetry={() => void query.refetch()} /> : null}
+      {query.isError ? (
+        <ErrorState error={query.error} onRetry={() => void query.refetch()} />
+      ) : null}
       {query.isSuccess && query.data.total_items === 0 ? (
         <EmptyState
           title="No categories yet"

@@ -9,7 +9,10 @@ type SidebarProps = {
 
 export function Sidebar({ open, onNavigate }: SidebarProps) {
   return (
-    <aside className={cn("sidebar", open && "sidebar--open")} aria-label="Main navigation">
+    <aside
+      className={cn("sidebar", open && "sidebar--open")}
+      aria-label="Main navigation"
+    >
       <div className="sidebar__brand">
         <span className="sidebar__logo">Monetra</span>
         <span className="sidebar__tagline">Personal finance</span>
@@ -19,7 +22,9 @@ export function Sidebar({ open, onNavigate }: SidebarProps) {
           <NavLink
             key={item.path}
             to={item.path}
-            className={({ isActive }) => cn("sidebar__link", isActive && "sidebar__link--active")}
+            className={({ isActive }) =>
+              cn("sidebar__link", isActive && "sidebar__link--active")
+            }
             onClick={onNavigate}
             end={item.path === "/dashboard"}
           >

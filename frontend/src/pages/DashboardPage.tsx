@@ -3,7 +3,13 @@ import { Link } from "react-router-dom";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { Alert } from "@/components/ui/Alert";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/Card";
 import { ErrorState } from "@/components/states/ErrorState";
 import { LoadingState } from "@/components/states/LoadingState";
 import { fetchHealth } from "@/api/health";
@@ -48,7 +54,10 @@ export function DashboardPage() {
           <CardContent>
             {healthQuery.isPending ? <LoadingState title="Checking API" /> : null}
             {healthQuery.isError ? (
-              <ErrorState error={healthQuery.error} onRetry={() => void healthQuery.refetch()} />
+              <ErrorState
+                error={healthQuery.error}
+                onRetry={() => void healthQuery.refetch()}
+              />
             ) : null}
             {healthQuery.isSuccess ? (
               <Alert variant="success">API health: {healthQuery.data.status}</Alert>

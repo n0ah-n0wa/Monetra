@@ -21,10 +21,16 @@ export function SettingsPage() {
       {user ? <p>Signed in as {user.email}</p> : null}
       {preferencesQuery.isPending ? <LoadingState title="Loading preferences" /> : null}
       {preferencesQuery.isError ? (
-        <ErrorState error={preferencesQuery.error} onRetry={() => void preferencesQuery.refetch()} />
+        <ErrorState
+          error={preferencesQuery.error}
+          onRetry={() => void preferencesQuery.refetch()}
+        />
       ) : null}
       {preferencesQuery.isSuccess ? (
-        <p>Email notifications: {preferencesQuery.data.email_enabled ? "enabled" : "disabled"}</p>
+        <p>
+          Email notifications:{" "}
+          {preferencesQuery.data.email_enabled ? "enabled" : "disabled"}
+        </p>
       ) : null}
     </FeaturePlaceholder>
   );

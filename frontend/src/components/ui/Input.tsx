@@ -6,5 +6,7 @@ type InputProps = InputHTMLAttributes<HTMLInputElement> & {
 };
 
 export function Input({ className, hasError, ...props }: InputProps) {
-  return <input className={cn("input", hasError && "input--error", className)} {...props} />;
+  return (
+    <input className={cn("input", hasError && "input--error", className)} {...props} />
+  );
 }

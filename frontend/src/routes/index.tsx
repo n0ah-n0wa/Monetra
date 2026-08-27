@@ -1,7 +1,10 @@
 import { Navigate, createBrowserRouter } from "react-router-dom";
 import { AppShell } from "@/components/layout/AppShell";
 import { GuestRoute, ProtectedRoute } from "@/components/routing/ProtectedRoute";
-import { AccountDetailPage, AccountsPage } from "@/features/accounts/pages/AccountsPage";
+import {
+  AccountDetailPage,
+  AccountsPage,
+} from "@/features/accounts/pages/AccountsPage";
 import { AnalyticsPage } from "@/features/analytics/pages/AnalyticsPage";
 import { ForgotPasswordPage } from "@/features/auth/pages/ForgotPasswordPage";
 import { LoginPage } from "@/features/auth/pages/LoginPage";

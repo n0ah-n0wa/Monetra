@@ -16,7 +16,9 @@ export type BudgetListParams = {
   page_size?: number;
 };
 
-export async function fetchBudgets(params: BudgetListParams = {}): Promise<PaginatedResponse<Budget>> {
+export async function fetchBudgets(
+  params: BudgetListParams = {},
+): Promise<PaginatedResponse<Budget>> {
   return apiClient.get<PaginatedResponse<Budget>>(`/budgets${toSearchParams(params)}`);
 }
 

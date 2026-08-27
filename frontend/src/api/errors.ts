@@ -51,7 +51,10 @@ export function parseApiError(status: number, body: unknown): ApiError {
   return new ApiError("Request failed.", status, body);
 }
 
-export function getErrorMessage(error: unknown, fallback = "Something went wrong."): string {
+export function getErrorMessage(
+  error: unknown,
+  fallback = "Something went wrong.",
+): string {
   if (isApiError(error)) {
     return error.message;
   }

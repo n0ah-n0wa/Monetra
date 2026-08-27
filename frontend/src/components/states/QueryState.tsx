@@ -10,13 +10,24 @@ type QueryStateProps<T> = {
   children: (data: T) => ReactNode;
 };
 
-export function QueryState<T>({ query, loadingTitle, errorTitle, children }: QueryStateProps<T>) {
+export function QueryState<T>({
+  query,
+  loadingTitle,
+  errorTitle,
+  children,
+}: QueryStateProps<T>) {
   if (query.isPending) {
     return <LoadingState title={loadingTitle} />;
   }
 
   if (query.isError) {
-    return <ErrorState error={query.error} title={errorTitle} onRetry={() => void query.refetch()} />;
+    return (
+      <ErrorState
+        error={query.error}
+        title={errorTitle}
+        onRetry={() => void query.refetch()}
+      />
+    );
   }
 
   return <>{children(query.data)}</>;

@@ -18,7 +18,9 @@ export function NotificationsPage() {
       description="Stay informed about budgets, goals, imports, and recurring activity."
     >
       {query.isPending ? <LoadingState title="Loading notifications" /> : null}
-      {query.isError ? <ErrorState error={query.error} onRetry={() => void query.refetch()} /> : null}
+      {query.isError ? (
+        <ErrorState error={query.error} onRetry={() => void query.refetch()} />
+      ) : null}
       {query.isSuccess && query.data.total_items === 0 ? (
         <EmptyState title="No notifications" description="You're all caught up." />
       ) : null}

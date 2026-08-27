@@ -18,7 +18,9 @@ export function AnalyticsPage() {
       description="Visualize cash flow, spending trends, and savings performance."
     >
       {query.isPending ? <LoadingState title="Loading analytics" /> : null}
-      {query.isError ? <ErrorState error={query.error} onRetry={() => void query.refetch()} /> : null}
+      {query.isError ? (
+        <ErrorState error={query.error} onRetry={() => void query.refetch()} />
+      ) : null}
       {query.isSuccess ? (
         <p>
           Net for the current period:{" "}

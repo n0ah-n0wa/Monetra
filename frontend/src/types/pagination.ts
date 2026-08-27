@@ -11,7 +11,9 @@ export type PaginationParams = {
   page_size?: number;
 };
 
-export function toSearchParams(params: Record<string, string | number | boolean | undefined>): string {
+export function toSearchParams(
+  params: Record<string, string | number | boolean | undefined>,
+): string {
   const search = new URLSearchParams();
   for (const [key, value] of Object.entries(params)) {
     if (value !== undefined && value !== "") {

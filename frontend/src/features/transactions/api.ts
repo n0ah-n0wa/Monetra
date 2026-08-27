@@ -23,7 +23,9 @@ export type TransactionListParams = {
 export async function fetchTransactions(
   params: TransactionListParams = {},
 ): Promise<PaginatedResponse<Transaction>> {
-  return apiClient.get<PaginatedResponse<Transaction>>(`/transactions${toSearchParams(params)}`);
+  return apiClient.get<PaginatedResponse<Transaction>>(
+    `/transactions${toSearchParams(params)}`,
+  );
 }
 
 export async function fetchTransaction(id: string): Promise<Transaction> {

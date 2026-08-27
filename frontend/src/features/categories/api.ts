@@ -17,7 +17,9 @@ export type CategoryListParams = {
 export async function fetchCategories(
   params: CategoryListParams = {},
 ): Promise<PaginatedResponse<Category>> {
-  return apiClient.get<PaginatedResponse<Category>>(`/categories${toSearchParams(params)}`);
+  return apiClient.get<PaginatedResponse<Category>>(
+    `/categories${toSearchParams(params)}`,
+  );
 }
 
 export async function fetchCategory(id: string): Promise<Category> {

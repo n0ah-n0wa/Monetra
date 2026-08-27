@@ -19,7 +19,9 @@ export function TransactionsPage() {
       description="Review income, expenses, and transfers across accounts."
     >
       {query.isPending ? <LoadingState title="Loading transactions" /> : null}
-      {query.isError ? <ErrorState error={query.error} onRetry={() => void query.refetch()} /> : null}
+      {query.isError ? (
+        <ErrorState error={query.error} onRetry={() => void query.refetch()} />
+      ) : null}
       {query.isSuccess && query.data.total_items === 0 ? (
         <EmptyState
           title="No transactions yet"

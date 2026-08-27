@@ -14,8 +14,12 @@ export type AnalyticsParams = {
   end_date?: string;
 };
 
-export async function fetchIncomeVsExpenses(params: AnalyticsParams = {}): Promise<IncomeVsExpenses> {
-  return apiClient.get<IncomeVsExpenses>(`/analytics/income-vs-expenses${toSearchParams(params)}`);
+export async function fetchIncomeVsExpenses(
+  params: AnalyticsParams = {},
+): Promise<IncomeVsExpenses> {
+  return apiClient.get<IncomeVsExpenses>(
+    `/analytics/income-vs-expenses${toSearchParams(params)}`,
+  );
 }
 
 export async function fetchNetCashFlow(params: AnalyticsParams = {}): Promise<{

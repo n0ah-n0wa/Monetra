@@ -19,7 +19,9 @@ export function AccountsPage() {
       description="Manage cash, checking, savings, and other financial accounts."
     >
       {query.isPending ? <LoadingState title="Loading accounts" /> : null}
-      {query.isError ? <ErrorState error={query.error} onRetry={() => void query.refetch()} /> : null}
+      {query.isError ? (
+        <ErrorState error={query.error} onRetry={() => void query.refetch()} />
+      ) : null}
       {query.isSuccess && query.data.total_items === 0 ? (
         <EmptyState
           title="No accounts yet"

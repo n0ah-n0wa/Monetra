@@ -127,7 +127,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       user: userQuery.data ?? null,
       isAuthenticated: Boolean(getAccessToken()),
       isBootstrapping:
-        !bootstrapped || (Boolean(getAccessToken()) && userQuery.isPending && !userQuery.isError),
+        !bootstrapped ||
+        (Boolean(getAccessToken()) && userQuery.isPending && !userQuery.isError),
       login: async (values) => {
         await loginMutation.mutateAsync(values);
       },

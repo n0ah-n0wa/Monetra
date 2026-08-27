@@ -4,7 +4,13 @@ import { FormError } from "@/components/forms/FormError";
 import { FormField } from "@/components/forms/FormField";
 import { AuthLayout } from "@/components/layout/AppShell";
 import { Button } from "@/components/ui/Button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { useAuth } from "@/features/auth/hooks";
 import { registerSchema, type RegisterFormValues } from "@/features/auth/schemas";
@@ -23,7 +29,9 @@ export function RegisterPage() {
       await register(values);
       navigate(routes.dashboard, { replace: true });
     } catch (error) {
-      form.setError("root", { message: getErrorMessage(error, "Unable to create account.") });
+      form.setError("root", {
+        message: getErrorMessage(error, "Unable to create account."),
+      });
     }
   });
 
@@ -36,7 +44,12 @@ export function RegisterPage() {
         </CardHeader>
         <CardContent>
           <form className="stack" onSubmit={(event) => void onSubmit(event)} noValidate>
-            <FormField id="email" label="Email" required error={form.formState.errors.email}>
+            <FormField
+              id="email"
+              label="Email"
+              required
+              error={form.formState.errors.email}
+            >
               <Input
                 id="email"
                 type="email"
@@ -45,7 +58,12 @@ export function RegisterPage() {
                 {...form.register("email")}
               />
             </FormField>
-            <FormField id="password" label="Password" required error={form.formState.errors.password}>
+            <FormField
+              id="password"
+              label="Password"
+              required
+              error={form.formState.errors.password}
+            >
               <Input
                 id="password"
                 type="password"

@@ -19,9 +19,14 @@ export function GoalsPage() {
       description="Track savings targets and milestone progress."
     >
       {query.isPending ? <LoadingState title="Loading goals" /> : null}
-      {query.isError ? <ErrorState error={query.error} onRetry={() => void query.refetch()} /> : null}
+      {query.isError ? (
+        <ErrorState error={query.error} onRetry={() => void query.refetch()} />
+      ) : null}
       {query.isSuccess && query.data.total_items === 0 ? (
-        <EmptyState title="No goals yet" description="Savings goals will be created and tracked here." />
+        <EmptyState
+          title="No goals yet"
+          description="Savings goals will be created and tracked here."
+        />
       ) : null}
       {query.isSuccess && query.data.total_items > 0 ? (
         <p>{query.data.total_items} goal(s) in progress.</p>

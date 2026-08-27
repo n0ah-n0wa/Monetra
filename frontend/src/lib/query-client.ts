@@ -35,7 +35,8 @@ export const queryKeys = {
   },
   transactions: {
     all: ["transactions"] as const,
-    list: (params?: Record<string, unknown>) => ["transactions", "list", params] as const,
+    list: (params?: Record<string, unknown>) =>
+      ["transactions", "list", params] as const,
     detail: (id: string) => ["transactions", "detail", id] as const,
   },
   categories: {
@@ -57,11 +58,13 @@ export const queryKeys = {
     root: ["analytics"] as const,
     incomeVsExpenses: (params?: Record<string, unknown>) =>
       ["analytics", "income-vs-expenses", params] as const,
-    cashFlow: (params?: Record<string, unknown>) => ["analytics", "cash-flow", params] as const,
+    cashFlow: (params?: Record<string, unknown>) =>
+      ["analytics", "cash-flow", params] as const,
   },
   notifications: {
     all: ["notifications"] as const,
-    list: (params?: Record<string, unknown>) => ["notifications", "list", params] as const,
+    list: (params?: Record<string, unknown>) =>
+      ["notifications", "list", params] as const,
     preferences: ["notifications", "preferences"] as const,
   },
   settings: {

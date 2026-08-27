@@ -5,10 +5,19 @@ import { FormField } from "@/components/forms/FormField";
 import { AuthLayout } from "@/components/layout/AppShell";
 import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/Card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import * as authApi from "@/features/auth/api";
-import { forgotPasswordSchema, type ForgotPasswordFormValues } from "@/features/auth/schemas";
+import {
+  forgotPasswordSchema,
+  type ForgotPasswordFormValues,
+} from "@/features/auth/schemas";
 import { useZodForm } from "@/lib/form";
 import { routes } from "@/lib/routes";
 
@@ -30,7 +39,9 @@ export function ForgotPasswordPage() {
       <Card>
         <CardHeader>
           <CardTitle>Reset password</CardTitle>
-          <CardDescription>We will email reset instructions if the account exists.</CardDescription>
+          <CardDescription>
+            We will email reset instructions if the account exists.
+          </CardDescription>
         </CardHeader>
         <CardContent>
           {mutation.isSuccess ? (
@@ -38,8 +49,17 @@ export function ForgotPasswordPage() {
               If an account exists for that email, reset instructions have been sent.
             </Alert>
           ) : (
-            <form className="stack" onSubmit={(event) => void onSubmit(event)} noValidate>
-              <FormField id="email" label="Email" required error={form.formState.errors.email}>
+            <form
+              className="stack"
+              onSubmit={(event) => void onSubmit(event)}
+              noValidate
+            >
+              <FormField
+                id="email"
+                label="Email"
+                required
+                error={form.formState.errors.email}
+              >
                 <Input
                   id="email"
                   type="email"
