@@ -68,6 +68,11 @@ class Settings(BaseSettings):
     api_default_page_size: int = Field(default=20, ge=1)
     api_max_page_size: int = Field(default=100, ge=1)
 
+    exchange_rate_provider: Literal["none", "static", "test"] = "none"
+    exchange_rate_static_rates: str = ""
+    exchange_rate_cache_ttl_seconds: int = Field(default=300, ge=0)
+    exchange_rate_allow_stale_on_failure: bool = True
+
     @field_validator("cors_origins", mode="before")
     @classmethod
     def parse_cors_origins(cls, value: object) -> object:

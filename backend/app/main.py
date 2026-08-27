@@ -16,6 +16,7 @@ from app.core.logging import configure_logging, get_logger
 from app.core.middleware import RequestIdMiddleware, SecurityHeadersMiddleware
 from app.core.rate_limit import InMemoryRateLimiter
 from app.db.session import dispose_db, init_db
+from app.services.exchange_rate_providers import create_exchange_rate_provider
 from app.services.notification_providers import create_notification_provider
 
 logger = get_logger(__name__)
@@ -32,6 +33,7 @@ def create_lifespan(
         init_db(settings)
         _app.state.rate_limiter = InMemoryRateLimiter()
         _app.state.notification_provider = create_notification_provider(settings)
+        _app.state.exchange_rate_provider = create_exchange_rate_provider(settings)
         logger.info(
             "event=startup app=%s version=%s env=%s",
             settings.app_name,
@@ -83,6 +85,10 @@ def custom_openapi(application: FastAPI, settings: Settings) -> dict[str, object
             {
                 "name": "analytics",
                 "description": "Financial analytics and dashboard metrics.",
+            },
+            {
+                "name": "exchange-rates",
+                "description": "Stored exchange rates for multi-currency reporting.",
             },
             {
                 "name": "goals",

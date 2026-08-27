@@ -30,7 +30,6 @@ from app.domain.transactions import normalize_money
 from app.models.enums import TransactionType
 from app.models.user import User
 from app.repositories import analytics_repository as analytics_repo
-from app.repositories import exchange_rate_repository as exchange_rate_repo
 from app.schemas.analytics import (
     AnalyticsPeriodResponse,
     BalanceOverTimePoint,
@@ -50,6 +49,7 @@ from app.schemas.analytics import (
     TopTransactionItem,
 )
 from app.services import budget_service
+from app.services import exchange_rate_service as fx_service
 
 
 @dataclass(frozen=True)
@@ -100,59 +100,6 @@ def _period_response(resolved: ResolvedAnalyticsPeriod) -> AnalyticsPeriodRespon
 _TOP_TRANSACTION_CANDIDATE_CAP = 10_000
 
 
-async def _build_rate_lookup(
-    session: AsyncSession,
-    *,
-    reporting_currency: str,
-    pairs: set[tuple[str, date]],
-) -> dict[tuple[str, date], Decimal]:
-    lookup: dict[tuple[str, date], Decimal] = {}
-    by_currency: dict[str, set[date]] = {}
-    for currency, rate_date in pairs:
-        if currency == reporting_currency:
-            lookup[(currency, rate_date)] = Decimal("1")
-            continue
-        by_currency.setdefault(currency, set()).add(rate_date)
-    for currency, dates in by_currency.items():
-        rates = await exchange_rate_repo.get_rates_on_or_before_dates(
-            session,
-            base_currency=currency,
-            quote_currency=reporting_currency,
-            dates=dates,
-        )
-        missing = sorted(date_value for date_value in dates if date_value not in rates)
-        if missing:
-            raise ValidationAppError(
-                code="MISSING_EXCHANGE_RATE",
-                message=(
-                    f"No exchange rate found for {currency}/{reporting_currency} "
-                    f"on or before {missing[0].isoformat()}."
-                ),
-                details={
-                    "base_currency": currency,
-                    "quote_currency": reporting_currency,
-                    "missing_dates": [value.isoformat() for value in missing],
-                },
-            )
-        for rate_date in dates:
-            lookup[(currency, rate_date)] = rates[rate_date]
-    return lookup
-
-
-def _convert_amount(
-    *,
-    amount: Decimal,
-    currency: str,
-    rate_date: date,
-    reporting_currency: str,
-    rate_lookup: dict[tuple[str, date], Decimal],
-) -> Decimal:
-    if currency == reporting_currency:
-        return normalize_money(amount)
-    rate = rate_lookup[(currency, rate_date)]
-    return normalize_money(amount * rate)
-
-
 async def _aggregate_income_expenses(
     session: AsyncSession,
     *,
@@ -166,7 +113,7 @@ async def _aggregate_income_expenses(
         end_date=resolved.end_date,
     )
     pairs = {(row.currency, row.bucket_date) for row in rows}
-    rate_lookup = await _build_rate_lookup(
+    rate_lookup = await fx_service.build_rate_lookup(
         session,
         reporting_currency=resolved.reporting_currency,
         pairs=pairs,
@@ -174,7 +121,7 @@ async def _aggregate_income_expenses(
     income = Decimal("0")
     expenses = Decimal("0")
     for row in rows:
-        converted = _convert_amount(
+        converted = fx_service.convert_amount_with_lookup(
             amount=row.total,
             currency=row.currency,
             rate_date=row.bucket_date,
@@ -245,7 +192,7 @@ async def get_net_cash_flow(
     )
     granularity = trend_granularity(resolved.start_date, resolved.end_date)
     pairs = {(row.currency, row.bucket_date) for row in rows}
-    rate_lookup = await _build_rate_lookup(
+    rate_lookup = await fx_service.build_rate_lookup(
         session,
         reporting_currency=resolved.reporting_currency,
         pairs=pairs,
@@ -255,7 +202,7 @@ async def get_net_cash_flow(
     expenses_by_bucket: dict[date, Decimal] = {}
     for row in rows:
         bucket = bucket_date(row.bucket_date, granularity)
-        converted = _convert_amount(
+        converted = fx_service.convert_amount_with_lookup(
             amount=row.total,
             currency=row.currency,
             rate_date=row.bucket_date,
@@ -326,7 +273,7 @@ async def _opening_balance_at_date(
         for row in pre_period_rows
         if row.total != Decimal("0")
     )
-    rate_lookup = await _build_rate_lookup(
+    rate_lookup = await fx_service.build_rate_lookup(
         session,
         reporting_currency=reporting_currency,
         pairs=pairs,
@@ -337,7 +284,7 @@ async def _opening_balance_at_date(
             continue
         total = normalize_money(
             total
-            + _convert_amount(
+            + fx_service.convert_amount_with_lookup(
                 amount=opening.total,
                 currency=opening.currency,
                 rate_date=on_date,
@@ -350,7 +297,7 @@ async def _opening_balance_at_date(
             continue
         total = normalize_money(
             total
-            + _convert_amount(
+            + fx_service.convert_amount_with_lookup(
                 amount=ledger.total,
                 currency=ledger.currency,
                 rate_date=ledger.bucket_date,
@@ -386,7 +333,7 @@ async def get_balance_over_time(
         end_date=resolved.end_date,
     )
     pairs = {(row.currency, row.bucket_date) for row in delta_rows}
-    rate_lookup = await _build_rate_lookup(
+    rate_lookup = await fx_service.build_rate_lookup(
         session,
         reporting_currency=resolved.reporting_currency,
         pairs=pairs,
@@ -394,7 +341,7 @@ async def get_balance_over_time(
 
     daily_delta: dict[date, Decimal] = {}
     for row in delta_rows:
-        converted = _convert_amount(
+        converted = fx_service.convert_amount_with_lookup(
             amount=row.delta,
             currency=row.currency,
             rate_date=row.bucket_date,
@@ -451,7 +398,7 @@ async def get_spending_by_category(
         end_date=resolved.end_date,
     )
     pairs = {(row.currency, row.bucket_date) for row in rows}
-    rate_lookup = await _build_rate_lookup(
+    rate_lookup = await fx_service.build_rate_lookup(
         session,
         reporting_currency=resolved.reporting_currency,
         pairs=pairs,
@@ -460,7 +407,7 @@ async def get_spending_by_category(
     totals_by_category: dict[uuid.UUID, tuple[str, Decimal]] = {}
     total_expenses = Decimal("0")
     for row in rows:
-        converted = _convert_amount(
+        converted = fx_service.convert_amount_with_lookup(
             amount=row.total,
             currency=row.currency,
             rate_date=row.bucket_date,
@@ -529,7 +476,7 @@ async def get_spending_trends(
     )
     granularity = trend_granularity(resolved.start_date, resolved.end_date)
     pairs = {(row.currency, row.bucket_date) for row in rows}
-    rate_lookup = await _build_rate_lookup(
+    rate_lookup = await fx_service.build_rate_lookup(
         session,
         reporting_currency=resolved.reporting_currency,
         pairs=pairs,
@@ -539,7 +486,7 @@ async def get_spending_trends(
     total_expenses = Decimal("0")
     for row in rows:
         bucket = bucket_date(row.bucket_date, granularity)
-        converted = _convert_amount(
+        converted = fx_service.convert_amount_with_lookup(
             amount=row.total,
             currency=row.currency,
             rate_date=row.bucket_date,
@@ -714,7 +661,7 @@ async def _top_transactions_response(
         max_candidates=_TOP_TRANSACTION_CANDIDATE_CAP,
     )
     pairs = {(row.currency, row.transaction_date) for row in rows}
-    rate_lookup = await _build_rate_lookup(
+    rate_lookup = await fx_service.build_rate_lookup(
         session,
         reporting_currency=resolved.reporting_currency,
         pairs=pairs,
@@ -725,7 +672,7 @@ async def _top_transactions_response(
             description=row.description,
             amount=row.amount,
             currency=row.currency,
-            reporting_amount=_convert_amount(
+            reporting_amount=fx_service.convert_amount_with_lookup(
                 amount=row.amount,
                 currency=row.currency,
                 rate_date=row.transaction_date,

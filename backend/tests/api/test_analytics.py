@@ -988,3 +988,78 @@ async def test_spending_trends_exclude_transfers(
     assert response.status_code == 200
     body = response.json()
     assert body["total_expenses"] == "25.0000"
+
+
+@pytest.mark.asyncio
+async def test_analytics_multiple_currencies_with_reporting_currency(
+    auth_client: AsyncClient,
+) -> None:
+    token = await _register_token(auth_client, "analytics-multi-ccy")
+    headers = _auth_headers(token)
+    usd = await _create_account(
+        auth_client,
+        token,
+        name="USD Multi",
+        currency="USD",
+        opening_balance="0.0000",
+    )
+    eur = await _create_account(
+        auth_client,
+        token,
+        name="EUR Multi",
+        currency="EUR",
+        opening_balance="0.0000",
+    )
+    salary = await _category_id(
+        auth_client,
+        token,
+        name="Salary",
+        category_type="income",
+    )
+    rate = await auth_client.post(
+        "/api/v1/exchange-rates",
+        json={
+            "base_currency": "EUR",
+            "quote_currency": "USD",
+            "rate": "1.25000000",
+            "rate_date": "2026-02-01",
+            "overwrite_existing": True,
+        },
+        headers=headers,
+    )
+    assert rate.status_code == 201, rate.text
+
+    await _create_income(
+        auth_client,
+        token,
+        account_id=usd,
+        category_id=salary,
+        amount="100.0000",
+        transaction_date="2026-02-05",
+        currency="USD",
+    )
+    await _create_income(
+        auth_client,
+        token,
+        account_id=eur,
+        category_id=salary,
+        amount="80.0000",
+        transaction_date="2026-02-06",
+        currency="EUR",
+    )
+
+    profile = await auth_client.patch(
+        "/api/v1/users/me",
+        json={"reporting_currency": "USD"},
+        headers=headers,
+    )
+    assert profile.status_code == 200
+
+    response = await auth_client.get(
+        f"{API}/income-vs-expenses?period=custom&date_from=2026-02-01&date_to=2026-02-28",
+        headers=headers,
+    )
+    assert response.status_code == 200, response.text
+    # 100 USD + 80 EUR * 1.25 = 100 + 100 = 200
+    assert response.json()["income"] == "200.0000"
+    assert response.json()["reporting_currency"] == "USD"
