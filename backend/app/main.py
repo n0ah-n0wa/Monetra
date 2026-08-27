@@ -95,6 +95,14 @@ def custom_openapi(application: FastAPI, settings: Settings) -> dict[str, object
                 "description": "Financial goal tracking and progress analytics.",
             },
             {
+                "name": "imports",
+                "description": "CSV transaction import jobs and previews.",
+            },
+            {
+                "name": "exports",
+                "description": "CSV export of owned financial data.",
+            },
+            {
                 "name": "transactions",
                 "description": "Income and expense transaction management.",
             },

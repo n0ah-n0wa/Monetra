@@ -44,6 +44,8 @@ async def create_transaction(
     description: str,
     transaction_date: date,
     notes: str | None,
+    import_job_id: uuid.UUID | None = None,
+    external_reference: str | None = None,
 ) -> Transaction:
     transaction = Transaction(
         user_id=user_id,
@@ -55,6 +57,8 @@ async def create_transaction(
         description=description,
         transaction_date=transaction_date,
         notes=notes,
+        import_job_id=import_job_id,
+        external_reference=external_reference,
     )
     session.add(transaction)
     await session.flush()

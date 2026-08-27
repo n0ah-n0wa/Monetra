@@ -70,6 +70,23 @@ async def list_categories_for_user(
     return list(result.scalars().all()), int(total or 0)
 
 
+async def find_active_category_by_name(
+    session: AsyncSession,
+    *,
+    user_id: uuid.UUID,
+    name: str,
+) -> Category | None:
+    """Resolve a user or system category by exact name (case-insensitive)."""
+    result = await session.execute(
+        select(Category).where(
+            or_(Category.user_id == user_id, Category.user_id.is_(None)),
+            Category.status == CategoryStatus.ACTIVE,
+            func.lower(Category.name) == name.strip().lower(),
+        ),
+    )
+    return result.scalars().first()
+
+
 async def archive_category(session: AsyncSession, category: Category) -> None:
     category.status = CategoryStatus.ARCHIVED
     category.archived_at = datetime.now(UTC)

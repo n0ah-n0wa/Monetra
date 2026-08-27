@@ -68,6 +68,11 @@ class Settings(BaseSettings):
     api_default_page_size: int = Field(default=20, ge=1)
     api_max_page_size: int = Field(default=100, ge=1)
 
+    import_max_file_bytes: int = Field(default=5 * 1024 * 1024, ge=1024)
+    import_max_rows: int = Field(default=10_000, ge=1)
+    import_preview_limit: int = Field(default=50, ge=1)
+    export_max_rows: int = Field(default=10_000, ge=1)
+
     exchange_rate_provider: Literal["none", "static", "test"] = "none"
     exchange_rate_static_rates: str = ""
     exchange_rate_cache_ttl_seconds: int = Field(default=300, ge=0)
