@@ -81,6 +81,14 @@ def custom_openapi(application: FastAPI, settings: Settings) -> dict[str, object
                 "description": "Budget management and utilization analytics.",
             },
             {
+                "name": "analytics",
+                "description": "Financial analytics and dashboard metrics.",
+            },
+            {
+                "name": "goals",
+                "description": "Financial goal tracking and progress analytics.",
+            },
+            {
                 "name": "transactions",
                 "description": "Income and expense transaction management.",
             },
