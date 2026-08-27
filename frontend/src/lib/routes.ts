@@ -1,0 +1,34 @@
+export const routes = {
+  login: "/login",
+  register: "/register",
+  forgotPassword: "/forgot-password",
+  resetPassword: "/reset-password",
+  dashboard: "/dashboard",
+  accounts: "/accounts",
+  accountDetail: (id: string) => `/accounts/${id}`,
+  transactions: "/transactions",
+  transactionNew: "/transactions/new",
+  transactionDetail: (id: string) => `/transactions/${id}`,
+  categories: "/categories",
+  budgets: "/budgets",
+  budgetDetail: (id: string) => `/budgets/${id}`,
+  goals: "/goals",
+  goalDetail: (id: string) => `/goals/${id}`,
+  analytics: "/analytics",
+  notifications: "/notifications",
+  settings: "/settings",
+} as const;
+
+export type AppRoute = (typeof routes)[keyof typeof routes];
+
+export const navItems = [
+  { label: "Dashboard", path: routes.dashboard },
+  { label: "Accounts", path: routes.accounts },
+  { label: "Transactions", path: routes.transactions },
+  { label: "Categories", path: routes.categories },
+  { label: "Budgets", path: routes.budgets },
+  { label: "Goals", path: routes.goals },
+  { label: "Analytics", path: routes.analytics },
+  { label: "Notifications", path: routes.notifications },
+  { label: "Settings", path: routes.settings },
+] as const;
