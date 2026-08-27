@@ -104,6 +104,54 @@ async function request<T>(
   return body as T;
 }
 
+async function requestForm<T>(
+  path: string,
+  formData: FormData,
+  options: Omit<RequestOptions, "method" | "body" | "headers"> = {},
+  allowRetry = true,
+): Promise<T> {
+  const hadToken = Boolean(accessToken);
+  const headers: Record<string, string> = {
+    Accept: "application/json",
+  };
+
+  if (options.auth !== false && accessToken) {
+    headers.Authorization = `Bearer ${accessToken}`;
+  }
+
+  const response = await fetch(`${API_BASE_URL}${API_PREFIX}${path}`, {
+    method: "POST",
+    headers,
+    body: formData,
+    credentials: "include",
+    signal: options.signal,
+  });
+
+  if (
+    response.status === 401 &&
+    allowRetry &&
+    options.auth !== false &&
+    refreshHandler
+  ) {
+    const newToken = await refreshHandler();
+    if (newToken) {
+      return requestForm<T>(path, formData, options, false);
+    }
+    if (hadToken) {
+      sessionExpiredHandler?.();
+      throw new SessionExpiredError();
+    }
+  }
+
+  const body = await parseBody(response);
+
+  if (!response.ok) {
+    throw parseApiError(response.status, body);
+  }
+
+  return body as T;
+}
+
 export const apiClient = {
   get<T>(path: string, options?: Omit<RequestOptions, "method" | "body">): Promise<T> {
     return request<T>(path, { ...options, method: "GET" });
@@ -138,6 +186,14 @@ export const apiClient = {
     options?: Omit<RequestOptions, "method" | "body">,
   ): Promise<T> {
     return request<T>(path, { ...options, method: "DELETE" });
+  },
+
+  postForm<T>(
+    path: string,
+    formData: FormData,
+    options?: Omit<RequestOptions, "method" | "body" | "headers">,
+  ): Promise<T> {
+    return requestForm<T>(path, formData, options);
   },
 };
 

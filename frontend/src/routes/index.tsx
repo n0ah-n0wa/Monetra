@@ -14,6 +14,9 @@ import { BudgetsPage } from "@/features/budgets/pages/BudgetsPage";
 import { CategoriesPage } from "@/features/categories/pages/CategoriesPage";
 import { GoalDetailPage } from "@/features/goals/pages/GoalDetailPage";
 import { GoalsPage } from "@/features/goals/pages/GoalsPage";
+import { ImportPage } from "@/features/imports/pages/ImportPage";
+import { RecurringTransactionDetailPage } from "@/features/recurring-transactions/pages/RecurringTransactionDetailPage";
+import { RecurringTransactionsPage } from "@/features/recurring-transactions/pages/RecurringTransactionsPage";
 import { NotificationsPage } from "@/features/notifications/pages/NotificationsPage";
 import { SettingsPage } from "@/features/settings/pages/SettingsPage";
 import { TransactionCreatePage } from "@/features/transactions/pages/TransactionCreatePage";
@@ -63,12 +66,15 @@ export const router = createBrowserRouter([
           { path: routes.transactions, element: <TransactionsPage /> },
           { path: routes.transactionNew, element: <TransactionCreatePage /> },
           { path: "/transactions/:id", element: <TransactionDetailPage /> },
+          { path: routes.recurring, element: <RecurringTransactionsPage /> },
+          { path: "/recurring/:id", element: <RecurringTransactionDetailPage /> },
           { path: routes.categories, element: <CategoriesPage /> },
           { path: routes.budgets, element: <BudgetsPage /> },
           { path: "/budgets/:id", element: <BudgetDetailPage /> },
           { path: routes.goals, element: <GoalsPage /> },
           { path: "/goals/:id", element: <GoalDetailPage /> },
           { path: routes.analytics, element: <AnalyticsRoute /> },
+          { path: routes.import, element: <ImportPage /> },
           { path: routes.notifications, element: <NotificationsPage /> },
           { path: routes.settings, element: <SettingsPage /> },
         ],

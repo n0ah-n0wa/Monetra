@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/Button";
+import { NotificationNavLink } from "@/features/notifications/components/NotificationUnreadBadge";
 import { useAuth } from "@/features/auth/hooks";
 import { routes } from "@/lib/routes";
 
@@ -31,6 +32,7 @@ export function Header({ onMenuToggle }: HeaderProps) {
         <span className="app-header__title">Monetra</span>
       </div>
       <div className="app-header__end">
+        <NotificationNavLink className="app-header__notifications" />
         {user ? (
           <span className="app-header__user" title={user.email}>
             {user.email}

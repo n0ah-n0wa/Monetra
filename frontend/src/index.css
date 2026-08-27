@@ -422,12 +422,19 @@ input {
 }
 
 .sidebar__link {
-  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
   padding: 0.7rem 0.85rem;
   border-radius: 999px;
   color: var(--ink);
   text-decoration: none;
   font-weight: 600;
+}
+
+.sidebar__link-label {
+  min-width: 0;
 }
 
 .sidebar__link:hover {
@@ -467,6 +474,23 @@ input {
 .app-header__user {
   color: var(--muted);
   font-size: 0.9rem;
+}
+
+.app-header__notifications {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.65rem;
+  border-radius: 999px;
+  color: var(--ink);
+  text-decoration: none;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.app-header__notifications:hover,
+.app-header__notifications:focus-visible {
+  background: rgba(15, 61, 62, 0.06);
 }
 
 .auth-layout {
@@ -1244,5 +1268,311 @@ a.data-card__title:focus-visible {
 
   .analytics-panel__table {
     display: block;
+  }
+}
+
+/* CSV import wizard */
+.import-stepper {
+  margin-bottom: 1.5rem;
+}
+
+.import-stepper__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.import-stepper__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.65rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 0.85rem;
+  color: var(--muted);
+  background: var(--surface);
+}
+
+.import-stepper__item--current {
+  border-color: var(--brand);
+  color: var(--brand);
+  font-weight: 600;
+}
+
+.import-stepper__item--complete {
+  border-color: var(--success);
+  color: var(--success);
+}
+
+.import-stepper__marker {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 50%;
+  font-size: 0.75rem;
+  font-weight: 700;
+  background: color-mix(in srgb, var(--brand) 12%, transparent);
+}
+
+.import-section__title {
+  margin: 0 0 0.35rem;
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.import-section__description {
+  margin: 0 0 1rem;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.import-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+  gap: 0.75rem;
+  margin: 0 0 1.5rem;
+}
+
+.import-stats__item {
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  background: var(--surface);
+}
+
+.import-stats__item dt {
+  margin: 0;
+  font-size: 0.8rem;
+  color: var(--muted);
+}
+
+.import-stats__item dd {
+  margin: 0.25rem 0 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.import-table-wrap {
+  overflow-x: auto;
+  margin-bottom: 1.5rem;
+}
+
+.import-upload,
+.import-review,
+.import-history {
+  margin-bottom: 1.5rem;
+}
+
+.import-confirm {
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--border);
+}
+
+.import-confirm__option {
+  margin-bottom: 0.75rem;
+}
+
+.import-confirm__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.import-row-flag {
+  display: inline-block;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.import-row-flag--warning {
+  color: var(--warning);
+  background: color-mix(in srgb, var(--warning) 15%, transparent);
+}
+
+.import-result {
+  margin-bottom: 1.5rem;
+}
+
+@media (max-width: 640px) {
+  .import-stepper__label {
+    font-size: 0.8rem;
+  }
+
+  .import-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Notification center */
+.notification-unread-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.35rem;
+  height: 1.35rem;
+  padding: 0 0.35rem;
+  border-radius: 999px;
+  background: var(--brand);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.sidebar__link--active .notification-unread-badge {
+  background: #fff;
+  color: var(--brand);
+}
+
+.notification-center__summary {
+  margin-bottom: 1rem;
+}
+
+.notification-center__summary-text {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin: 0;
+  color: var(--muted);
+}
+
+.notification-center__inbox {
+  margin-bottom: 1.5rem;
+}
+
+.notification-center__inbox-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.notification-center__preferences {
+  padding: 1rem 1.1rem;
+}
+
+.notification-list {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.notification-item {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+
+.notification-item--unread {
+  border-color: color-mix(in srgb, var(--brand) 35%, var(--border));
+  background: color-mix(in srgb, var(--brand) 4%, var(--surface));
+}
+
+.notification-item__main {
+  min-width: min(100%, 16rem);
+  flex: 1;
+}
+
+.notification-item__title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.35rem;
+}
+
+.notification-item__unread-dot {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  background: var(--brand);
+  flex-shrink: 0;
+}
+
+.notification-item__title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.notification-item--unread .notification-item__title {
+  color: var(--brand);
+}
+
+.notification-item__message {
+  margin: 0;
+  line-height: 1.5;
+}
+
+.notification-item__meta {
+  margin: 0.5rem 0 0;
+  color: var(--muted);
+  font-size: 0.875rem;
+}
+
+.notification-item__actions {
+  display: flex;
+  align-items: flex-start;
+}
+
+.notification-preferences__fieldset {
+  border: 0;
+  margin: 0;
+  padding: 0;
+}
+
+.notification-preferences__list {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.notification-preferences__label {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  cursor: pointer;
+}
+
+.notification-preferences__text {
+  display: grid;
+  gap: 0.2rem;
+}
+
+.notification-preferences__name {
+  font-weight: 600;
+}
+
+.notification-preferences__description {
+  color: var(--muted);
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
+
+@media (max-width: 640px) {
+  .notification-center__inbox-header {
+    align-items: stretch;
+  }
+
+  .notification-item {
+    flex-direction: column;
   }
 }

@@ -39,6 +39,17 @@ export const queryKeys = {
       ["transactions", "list", params] as const,
     detail: (id: string) => ["transactions", "detail", id] as const,
   },
+  recurringTransactions: {
+    all: ["recurring-transactions"] as const,
+    list: (params?: Record<string, unknown>) =>
+      ["recurring-transactions", "list", params] as const,
+    detail: (id: string) => ["recurring-transactions", "detail", id] as const,
+  },
+  imports: {
+    all: ["imports"] as const,
+    list: (params?: Record<string, unknown>) => ["imports", "list", params] as const,
+    detail: (id: string) => ["imports", "detail", id] as const,
+  },
   categories: {
     all: ["categories"] as const,
     list: (params?: Record<string, unknown>) => ["categories", "list", params] as const,
@@ -77,6 +88,7 @@ export const queryKeys = {
     all: ["notifications"] as const,
     list: (params?: Record<string, unknown>) =>
       ["notifications", "list", params] as const,
+    unreadCount: ["notifications", "unread-count"] as const,
     preferences: ["notifications", "preferences"] as const,
   },
   settings: {

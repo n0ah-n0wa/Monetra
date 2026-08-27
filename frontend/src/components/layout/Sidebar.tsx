@@ -1,5 +1,6 @@
 import { NavLink } from "react-router-dom";
-import { navItems } from "@/lib/routes";
+import { NotificationUnreadBadge } from "@/features/notifications/components/NotificationUnreadBadge";
+import { navItems, routes } from "@/lib/routes";
 import { cn } from "@/lib/utils";
 
 type SidebarProps = {
@@ -29,7 +30,8 @@ export function Sidebar({ open, onNavigate }: SidebarProps) {
             onClick={onNavigate}
             end={item.path === "/dashboard"}
           >
-            {item.label}
+            <span className="sidebar__link-label">{item.label}</span>
+            {item.path === routes.notifications ? <NotificationUnreadBadge /> : null}
           </NavLink>
         ))}
       </nav>
