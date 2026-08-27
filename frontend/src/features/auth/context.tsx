@@ -8,16 +8,24 @@ import {
   type ReactNode,
 } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { getAccessToken, setAccessToken, setTokenRefreshHandler } from "@/api/client";
+import { isAuthFailureError } from "@/api/errors";
+import {
+  getAccessToken,
+  setAccessToken,
+  setSessionExpiredHandler,
+  setTokenRefreshHandler,
+} from "@/api/client";
 import * as authApi from "@/features/auth/api";
 import type { LoginFormValues, RegisterFormValues } from "@/features/auth/schemas";
 import { queryKeys } from "@/lib/query-client";
 import type { User } from "@/types/user";
 
-type AuthContextValue = {
+export type AuthContextValue = {
   user: User | null;
   isAuthenticated: boolean;
   isBootstrapping: boolean;
+  sessionExpired: boolean;
+  clearSessionExpired: () => void;
   login: (values: LoginFormValues) => Promise<void>;
   register: (values: RegisterFormValues) => Promise<void>;
   logout: () => Promise<void>;
@@ -28,7 +36,6 @@ type AuthContextValue = {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-export type { AuthContextValue };
 export { AuthContext };
 
 function applyAccessToken(token: string | null): void {
@@ -38,7 +45,25 @@ function applyAccessToken(token: string | null): void {
 export function AuthProvider({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient();
   const [bootstrapped, setBootstrapped] = useState(false);
+  const [sessionExpired, setSessionExpired] = useState(false);
+  const [hasToken, setHasToken] = useState(() => Boolean(getAccessToken()));
   const refreshPromiseRef = useRef<Promise<string | null> | null>(null);
+
+  const syncTokenState = useCallback((token: string | null) => {
+    applyAccessToken(token);
+    setHasToken(Boolean(token));
+  }, []);
+
+  const clearSession = useCallback(
+    async (markExpired: boolean) => {
+      syncTokenState(null);
+      await queryClient.clear();
+      if (markExpired) {
+        setSessionExpired(true);
+      }
+    },
+    [queryClient, syncTokenState],
+  );
 
   const refreshAccessToken = useCallback(async (): Promise<string | null> => {
     if (refreshPromiseRef.current) {
@@ -48,10 +73,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     refreshPromiseRef.current = (async () => {
       try {
         const response = await authApi.refreshSession();
-        applyAccessToken(response.access_token);
+        syncTokenState(response.access_token);
         return response.access_token;
       } catch {
-        applyAccessToken(null);
+        syncTokenState(null);
         return null;
       } finally {
         refreshPromiseRef.current = null;
@@ -59,12 +84,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     })();
 
     return refreshPromiseRef.current;
-  }, []);
+  }, [syncTokenState]);
 
   useEffect(() => {
     setTokenRefreshHandler(refreshAccessToken);
     return () => setTokenRefreshHandler(null);
   }, [refreshAccessToken]);
+
+  useEffect(() => {
+    setSessionExpiredHandler(() => {
+      void clearSession(true);
+    });
+    return () => setSessionExpiredHandler(null);
+  }, [clearSession]);
 
   useEffect(() => {
     let cancelled = false;
@@ -74,6 +106,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await refreshAccessToken();
       }
       if (!cancelled) {
+        setHasToken(Boolean(getAccessToken()));
         setBootstrapped(true);
       }
     }
@@ -88,14 +121,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const userQuery = useQuery({
     queryKey: queryKeys.currentUser,
     queryFn: authApi.fetchCurrentUser,
-    enabled: bootstrapped && Boolean(getAccessToken()),
+    enabled: bootstrapped && hasToken,
     retry: false,
   });
 
   const loginMutation = useMutation({
     mutationFn: authApi.login,
     onSuccess: async (response) => {
-      applyAccessToken(response.access_token);
+      syncTokenState(response.access_token);
+      setSessionExpired(false);
       await queryClient.invalidateQueries({ queryKey: queryKeys.currentUser });
     },
   });
@@ -103,32 +137,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const registerMutation = useMutation({
     mutationFn: authApi.register,
     onSuccess: async (response) => {
-      applyAccessToken(response.access_token);
+      syncTokenState(response.access_token);
+      setSessionExpired(false);
       await queryClient.invalidateQueries({ queryKey: queryKeys.currentUser });
     },
   });
 
   const logoutMutation = useMutation({
-    mutationFn: authApi.logout,
+    mutationFn: async () => {
+      try {
+        await authApi.logout();
+      } catch {
+        // Always clear local session even if the network call fails.
+      }
+    },
     onSettled: async () => {
-      applyAccessToken(null);
-      await queryClient.clear();
+      await clearSession(false);
+      setSessionExpired(false);
     },
   });
 
   useEffect(() => {
-    if (userQuery.isError) {
-      applyAccessToken(null);
+    if (userQuery.isError && hasToken && isAuthFailureError(userQuery.error)) {
+      void clearSession(true);
     }
-  }, [userQuery.isError]);
+  }, [clearSession, hasToken, userQuery.error, userQuery.isError]);
 
   const value = useMemo<AuthContextValue>(
     () => ({
       user: userQuery.data ?? null,
-      isAuthenticated: Boolean(getAccessToken()),
+      isAuthenticated: hasToken,
       isBootstrapping:
-        !bootstrapped ||
-        (Boolean(getAccessToken()) && userQuery.isPending && !userQuery.isError),
+        !bootstrapped || (hasToken && userQuery.isPending && !userQuery.isError),
+      sessionExpired,
+      clearSessionExpired: () => setSessionExpired(false),
       login: async (values) => {
         await loginMutation.mutateAsync(values);
       },
@@ -144,9 +186,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }),
     [
       bootstrapped,
+      hasToken,
       loginMutation,
       logoutMutation,
       registerMutation,
+      sessionExpired,
       userQuery.data,
       userQuery.isError,
       userQuery.isPending,

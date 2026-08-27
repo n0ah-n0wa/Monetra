@@ -63,3 +63,98 @@ export function getErrorMessage(
   }
   return fallback;
 }
+
+type ValidationIssue = {
+  loc?: Array<string | number>;
+  msg?: string;
+  message?: string;
+};
+
+/**
+ * Maps backend error payloads onto form field names.
+ * Supports FastAPI validation `details.errors` and simple field maps.
+ */
+export function getFieldErrors(error: unknown): Record<string, string> {
+  if (!isApiError(error)) {
+    return {};
+  }
+
+  const fieldErrors: Record<string, string> = {};
+  const details = error.details;
+
+  if (error.code === "EMAIL_ALREADY_REGISTERED") {
+    fieldErrors.email = error.message;
+  }
+
+  if (error.code === "WEAK_PASSWORD") {
+    const weakErrors = details.errors;
+    if (
+      Array.isArray(weakErrors) &&
+      weakErrors.every((item) => typeof item === "string")
+    ) {
+      const message = (weakErrors as string[]).join(" ");
+      fieldErrors.password = message;
+      fieldErrors.new_password = message;
+    } else {
+      fieldErrors.password = error.message;
+      fieldErrors.new_password = error.message;
+    }
+  }
+
+  if (error.code === "INVALID_CREDENTIALS") {
+    fieldErrors.root = error.message;
+  }
+
+  const rawErrors = details.errors;
+  if (Array.isArray(rawErrors)) {
+    for (const issue of rawErrors) {
+      if (typeof issue === "string") {
+        continue;
+      }
+      const validationIssue = issue as ValidationIssue;
+      const loc = validationIssue.loc ?? [];
+      const field = loc
+        .filter((part): part is string => typeof part === "string")
+        .filter((part) => part !== "body" && part !== "query" && part !== "path")
+        .at(-1);
+      const message = validationIssue.msg ?? validationIssue.message;
+      if (field && message && !fieldErrors[field]) {
+        fieldErrors[field] = message;
+      }
+    }
+  }
+
+  for (const [key, value] of Object.entries(details)) {
+    if (key === "errors") {
+      continue;
+    }
+    if (typeof value === "string" && !fieldErrors[key]) {
+      fieldErrors[key] = value;
+    }
+  }
+
+  return fieldErrors;
+}
+
+export function isUnauthorizedError(error: unknown): boolean {
+  return isApiError(error) && error.status === 401;
+}
+
+export function isForbiddenError(error: unknown): boolean {
+  return isApiError(error) && error.status === 403;
+}
+
+export function isAuthFailureError(error: unknown): boolean {
+  return isUnauthorizedError(error) || isForbiddenError(error);
+}
+
+export class SessionExpiredError extends Error {
+  constructor(message = "Session expired.") {
+    super(message);
+    this.name = "SessionExpiredError";
+  }
+}
+
+export function isSessionExpiredError(error: unknown): error is SessionExpiredError {
+  return error instanceof SessionExpiredError;
+}

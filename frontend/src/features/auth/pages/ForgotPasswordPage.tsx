@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { useMutation } from "@tanstack/react-query";
 import { FormError } from "@/components/forms/FormError";
 import { FormField } from "@/components/forms/FormField";
-import { AuthLayout } from "@/components/layout/AppShell";
+import { AuthLayout } from "@/components/layout/AuthLayout";
 import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import {
@@ -18,12 +18,13 @@ import {
   forgotPasswordSchema,
   type ForgotPasswordFormValues,
 } from "@/features/auth/schemas";
-import { useZodForm } from "@/lib/form";
+import { applyApiErrorToForm, useZodForm } from "@/lib/form";
 import { routes } from "@/lib/routes";
 
 export function ForgotPasswordPage() {
   const form = useZodForm<ForgotPasswordFormValues>(forgotPasswordSchema, {
     defaultValues: { email: "" },
+    mode: "onSubmit",
   });
 
   const mutation = useMutation({
@@ -31,16 +32,21 @@ export function ForgotPasswordPage() {
   });
 
   const onSubmit = form.handleSubmit(async (values) => {
-    await mutation.mutateAsync(values);
+    form.clearErrors("root");
+    try {
+      await mutation.mutateAsync(values);
+    } catch (error) {
+      applyApiErrorToForm(error, form.setError, "Unable to request a password reset.");
+    }
   });
 
   return (
     <AuthLayout>
       <Card>
         <CardHeader>
-          <CardTitle>Reset password</CardTitle>
+          <CardTitle>Forgot password</CardTitle>
           <CardDescription>
-            We will email reset instructions if the account exists.
+            Enter your email and we will send reset instructions if an account exists.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -53,6 +59,7 @@ export function ForgotPasswordPage() {
               className="stack"
               onSubmit={(event) => void onSubmit(event)}
               noValidate
+              aria-busy={mutation.isPending}
             >
               <FormField
                 id="email"
@@ -64,19 +71,23 @@ export function ForgotPasswordPage() {
                   id="email"
                   type="email"
                   autoComplete="email"
+                  inputMode="email"
+                  autoFocus
                   hasError={Boolean(form.formState.errors.email)}
                   {...form.register("email")}
                 />
               </FormField>
-              <FormError error={mutation.error} />
+              {form.formState.errors.root ? (
+                <FormError>{form.formState.errors.root.message}</FormError>
+              ) : null}
               <Button type="submit" loading={mutation.isPending}>
                 Send reset link
               </Button>
             </form>
           )}
-          <p className="auth-links">
+          <nav className="auth-links" aria-label="Account links">
             <Link to={routes.login}>Back to sign in</Link>
-          </p>
+          </nav>
         </CardContent>
       </Card>
     </AuthLayout>

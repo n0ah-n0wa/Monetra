@@ -2,7 +2,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import { useMutation } from "@tanstack/react-query";
 import { FormError } from "@/components/forms/FormError";
 import { FormField } from "@/components/forms/FormField";
-import { AuthLayout } from "@/components/layout/AppShell";
+import { AuthLayout } from "@/components/layout/AuthLayout";
 import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import {
@@ -18,7 +18,7 @@ import {
   resetPasswordSchema,
   type ResetPasswordFormValues,
 } from "@/features/auth/schemas";
-import { useZodForm } from "@/lib/form";
+import { applyApiErrorToForm, useZodForm } from "@/lib/form";
 import { routes } from "@/lib/routes";
 
 export function ResetPasswordPage() {
@@ -31,6 +31,7 @@ export function ResetPasswordPage() {
       new_password: "",
       confirm_password: "",
     },
+    mode: "onSubmit",
   });
 
   const mutation = useMutation({
@@ -38,10 +39,15 @@ export function ResetPasswordPage() {
   });
 
   const onSubmit = form.handleSubmit(async (values) => {
-    await mutation.mutateAsync({
-      token: values.token,
-      new_password: values.new_password,
-    });
+    form.clearErrors("root");
+    try {
+      await mutation.mutateAsync({
+        token: values.token,
+        new_password: values.new_password,
+      });
+    } catch (error) {
+      applyApiErrorToForm(error, form.setError, "Unable to reset password.");
+    }
   });
 
   return (
@@ -50,19 +56,27 @@ export function ResetPasswordPage() {
         <CardHeader>
           <CardTitle>Choose a new password</CardTitle>
           <CardDescription>
-            Enter the reset token and your new password.
+            {tokenFromQuery
+              ? "Enter and confirm your new password."
+              : "Paste your reset token, then choose a new password."}
           </CardDescription>
         </CardHeader>
         <CardContent>
           {mutation.isSuccess ? (
-            <Alert variant="success" title="Password updated">
-              Your password has been reset. You can now sign in.
-            </Alert>
+            <div className="stack">
+              <Alert variant="success" title="Password updated">
+                Your password has been reset. You can now sign in.
+              </Alert>
+              <Link className="btn btn--primary btn--md" to={routes.login}>
+                Go to sign in
+              </Link>
+            </div>
           ) : (
             <form
               className="stack"
               onSubmit={(event) => void onSubmit(event)}
               noValidate
+              aria-busy={mutation.isPending}
             >
               <FormField
                 id="token"
@@ -81,6 +95,7 @@ export function ResetPasswordPage() {
                 id="new_password"
                 label="New password"
                 required
+                description="Password requirements are enforced by the server."
                 error={form.formState.errors.new_password}
               >
                 <Input
@@ -105,15 +120,19 @@ export function ResetPasswordPage() {
                   {...form.register("confirm_password")}
                 />
               </FormField>
-              <FormError error={mutation.error} />
+              {form.formState.errors.root ? (
+                <FormError>{form.formState.errors.root.message}</FormError>
+              ) : null}
               <Button type="submit" loading={mutation.isPending}>
                 Update password
               </Button>
             </form>
           )}
-          <p className="auth-links">
-            <Link to={routes.login}>Back to sign in</Link>
-          </p>
+          {!mutation.isSuccess ? (
+            <nav className="auth-links" aria-label="Account links">
+              <Link to={routes.login}>Back to sign in</Link>
+            </nav>
+          ) : null}
         </CardContent>
       </Card>
     </AuthLayout>

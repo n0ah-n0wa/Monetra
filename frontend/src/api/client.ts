@@ -1,4 +1,4 @@
-import { ApiError, parseApiError } from "@/api/errors";
+import { ApiError, parseApiError, SessionExpiredError } from "@/api/errors";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "";
 const API_PREFIX = "/api/v1";
@@ -15,6 +15,7 @@ export type RequestOptions = {
 
 let accessToken: string | null = null;
 let refreshHandler: (() => Promise<string | null>) | null = null;
+let sessionExpiredHandler: (() => void) | null = null;
 
 export function setAccessToken(token: string | null): void {
   accessToken = token;
@@ -28,6 +29,10 @@ export function setTokenRefreshHandler(
   handler: (() => Promise<string | null>) | null,
 ): void {
   refreshHandler = handler;
+}
+
+export function setSessionExpiredHandler(handler: (() => void) | null): void {
+  sessionExpiredHandler = handler;
 }
 
 async function parseBody(response: Response): Promise<unknown> {
@@ -65,6 +70,7 @@ async function request<T>(
   options: RequestOptions = {},
   allowRetry = true,
 ): Promise<T> {
+  const hadToken = Boolean(accessToken);
   const response = await fetch(`${API_BASE_URL}${API_PREFIX}${path}`, {
     method: options.method ?? "GET",
     headers: buildHeaders(options),
@@ -82,6 +88,10 @@ async function request<T>(
     const newToken = await refreshHandler();
     if (newToken) {
       return request<T>(path, options, false);
+    }
+    if (hadToken) {
+      sessionExpiredHandler?.();
+      throw new SessionExpiredError();
     }
   }
 

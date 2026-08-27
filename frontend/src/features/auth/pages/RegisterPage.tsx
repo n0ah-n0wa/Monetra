@@ -1,8 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
-import { getErrorMessage } from "@/api/errors";
 import { FormError } from "@/components/forms/FormError";
 import { FormField } from "@/components/forms/FormField";
-import { AuthLayout } from "@/components/layout/AppShell";
+import { AuthLayout } from "@/components/layout/AuthLayout";
 import { Button } from "@/components/ui/Button";
 import {
   Card,
@@ -14,7 +13,7 @@ import {
 import { Input } from "@/components/ui/Input";
 import { useAuth } from "@/features/auth/hooks";
 import { registerSchema, type RegisterFormValues } from "@/features/auth/schemas";
-import { useZodForm } from "@/lib/form";
+import { applyApiErrorToForm, useZodForm } from "@/lib/form";
 import { routes } from "@/lib/routes";
 
 export function RegisterPage() {
@@ -22,16 +21,16 @@ export function RegisterPage() {
   const { register, isRegistering } = useAuth();
   const form = useZodForm<RegisterFormValues>(registerSchema, {
     defaultValues: { email: "", password: "" },
+    mode: "onSubmit",
   });
 
   const onSubmit = form.handleSubmit(async (values) => {
+    form.clearErrors("root");
     try {
       await register(values);
       navigate(routes.dashboard, { replace: true });
     } catch (error) {
-      form.setError("root", {
-        message: getErrorMessage(error, "Unable to create account."),
-      });
+      applyApiErrorToForm(error, form.setError, "Unable to create account.");
     }
   });
 
@@ -43,7 +42,12 @@ export function RegisterPage() {
           <CardDescription>Start tracking your finances with Monetra.</CardDescription>
         </CardHeader>
         <CardContent>
-          <form className="stack" onSubmit={(event) => void onSubmit(event)} noValidate>
+          <form
+            className="stack"
+            onSubmit={(event) => void onSubmit(event)}
+            noValidate
+            aria-busy={isRegistering}
+          >
             <FormField
               id="email"
               label="Email"
@@ -54,6 +58,8 @@ export function RegisterPage() {
                 id="email"
                 type="email"
                 autoComplete="email"
+                inputMode="email"
+                autoFocus
                 hasError={Boolean(form.formState.errors.email)}
                 {...form.register("email")}
               />
@@ -62,6 +68,7 @@ export function RegisterPage() {
               id="password"
               label="Password"
               required
+              description="Password requirements are enforced by the server."
               error={form.formState.errors.password}
             >
               <Input
@@ -79,9 +86,9 @@ export function RegisterPage() {
               Create account
             </Button>
           </form>
-          <p className="auth-links">
-            <Link to={routes.login}>Already have an account?</Link>
-          </p>
+          <nav className="auth-links" aria-label="Account links">
+            <Link to={routes.login}>Already have an account? Sign in</Link>
+          </nav>
         </CardContent>
       </Card>
     </AuthLayout>

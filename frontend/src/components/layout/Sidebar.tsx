@@ -10,6 +10,7 @@ type SidebarProps = {
 export function Sidebar({ open, onNavigate }: SidebarProps) {
   return (
     <aside
+      id="main-navigation"
       className={cn("sidebar", open && "sidebar--open")}
       aria-label="Main navigation"
     >

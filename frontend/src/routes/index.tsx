@@ -1,10 +1,8 @@
 import { Navigate, createBrowserRouter } from "react-router-dom";
 import { AppShell } from "@/components/layout/AppShell";
 import { GuestRoute, ProtectedRoute } from "@/components/routing/ProtectedRoute";
-import {
-  AccountDetailPage,
-  AccountsPage,
-} from "@/features/accounts/pages/AccountsPage";
+import { AccountDetailPage } from "@/features/accounts/pages/AccountDetailPage";
+import { AccountsPage } from "@/features/accounts/pages/AccountsPage";
 import { AnalyticsPage } from "@/features/analytics/pages/AnalyticsPage";
 import { ForgotPasswordPage } from "@/features/auth/pages/ForgotPasswordPage";
 import { LoginPage } from "@/features/auth/pages/LoginPage";
@@ -15,11 +13,9 @@ import { CategoriesPage } from "@/features/categories/pages/CategoriesPage";
 import { GoalDetailPage, GoalsPage } from "@/features/goals/pages/GoalsPage";
 import { NotificationsPage } from "@/features/notifications/pages/NotificationsPage";
 import { SettingsPage } from "@/features/settings/pages/SettingsPage";
-import {
-  TransactionCreatePage,
-  TransactionDetailPage,
-  TransactionsPage,
-} from "@/features/transactions/pages/TransactionsPage";
+import { TransactionCreatePage } from "@/features/transactions/pages/TransactionCreatePage";
+import { TransactionDetailPage } from "@/features/transactions/pages/TransactionDetailPage";
+import { TransactionsPage } from "@/features/transactions/pages/TransactionsPage";
 import { routes } from "@/lib/routes";
 import { DashboardPage } from "@/pages/DashboardPage";
 import { NotFoundPage } from "@/pages/NotFoundPage";
