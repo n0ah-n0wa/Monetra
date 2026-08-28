@@ -95,9 +95,9 @@ jobs:
           docker build -t monetra-nginx:ci ./nginx --target production
       - name: Verify production containers run as non-root
         run: |
-          backend_uid="$(docker run --rm monetra-backend:ci id -u)"
-          frontend_uid="$(docker run --rm monetra-frontend:ci id -u)"
-          nginx_uid="$(docker run --rm monetra-nginx:ci id -u)"
+          backend_uid="$(docker run --rm --entrypoint id monetra-backend:ci -u)"
+          frontend_uid="$(docker run --rm --entrypoint id monetra-frontend:ci -u)"
+          nginx_uid="$(docker run --rm --entrypoint su-exec monetra-nginx:ci nginx id -u)"
           if [ "$backend_uid" = "0" ]; then
             echo "Backend production image must not run as root"
             exit 1
@@ -107,16 +107,13 @@ jobs:
             exit 1
           fi
           if [ "$nginx_uid" = "0" ]; then
-            nginx_uid="$(docker run --rm --entrypoint su-exec monetra-nginx:ci nginx id -u)"
-          fi
-          if [ "$nginx_uid" = "0" ]; then
             echo "Nginx production image must not run worker processes as root"
             exit 1
           fi
           echo "Backend UID: $backend_uid, Frontend UID: $frontend_uid, Nginx UID: $nginx_uid"
       - name: Verify no secrets in image env
         run: |
-          if docker run --rm monetra-backend:ci env | grep -E 'JWT_SECRET_KEY=change-me'; then
+          if docker run --rm --entrypoint env monetra-backend:ci | grep -E 'JWT_SECRET_KEY=change-me'; then
             echo "Default JWT secret must not be baked into the image"
             exit 1
           fi
