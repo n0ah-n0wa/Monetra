@@ -165,7 +165,7 @@ describe("TransactionsPage", () => {
     });
 
     await screen.findByText("Coffee shop");
-    await user.click(screen.getByRole("button", { name: /^delete$/i }));
+    await user.click(screen.getByRole("button", { name: /delete coffee shop/i }));
     const dialog = await screen.findByRole("dialog");
     await user.click(
       within(dialog).getByRole("button", { name: /delete transaction/i }),
@@ -196,9 +196,9 @@ describe("TransactionCreatePage", () => {
       ],
     });
 
-    await screen.findByRole("heading", { name: /add transaction/i });
-    await user.clear(screen.getByLabelText(/^amount/i));
-    await user.type(screen.getByLabelText(/^amount/i), "25.0000");
+    const amountInput = await screen.findByLabelText(/^amount/i);
+    await user.clear(amountInput);
+    await user.type(amountInput, "25.0000");
     await user.type(screen.getByLabelText(/^description/i), "Coffee shop");
     await user.click(screen.getByRole("button", { name: /save transaction/i }));
 
@@ -226,7 +226,7 @@ describe("TransactionCreatePage", () => {
       routes: [{ path: routes.transactionNew, element: <TransactionCreatePage /> }],
     });
 
-    await screen.findByRole("heading", { name: /add transaction/i });
+    await screen.findByLabelText(/^amount/i);
     await user.type(screen.getByLabelText(/^amount/i), "12.50");
     await user.type(screen.getByLabelText(/^description/i), "Snack");
     await user.click(screen.getByRole("button", { name: /save and add another/i }));

@@ -160,7 +160,7 @@ describe("RecurringTransactionsPage", () => {
     await screen.findByText(/no recurring transactions/i);
 
     await user.click(
-      screen.getByRole("button", { name: /^add recurring transaction$/i }),
+      screen.getAllByRole("button", { name: /^add recurring transaction$/i })[0]!,
     );
     const dialog = await screen.findByRole("dialog");
     await user.click(
@@ -184,7 +184,7 @@ describe("RecurringTransactionsPage", () => {
     await screen.findByText(/no recurring transactions/i);
 
     await user.click(
-      screen.getByRole("button", { name: /^add recurring transaction$/i }),
+      screen.getAllByRole("button", { name: /^add recurring transaction$/i })[0]!,
     );
     const dialog = await screen.findByRole("dialog");
     await user.type(within(dialog).getByLabelText(/^amount/i), "1200");

@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useEffect, type ReactNode } from "react";
 
 type PageHeaderProps = {
   title: string;
@@ -7,6 +7,13 @@ type PageHeaderProps = {
 };
 
 export function PageHeader({ title, description, actions }: PageHeaderProps) {
+  useEffect(() => {
+    document.title = `${title} · Monetra`;
+    return () => {
+      document.title = "Monetra";
+    };
+  }, [title]);
+
   return (
     <header className="page-header">
       <div className="page-header__content">

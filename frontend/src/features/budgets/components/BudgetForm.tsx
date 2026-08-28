@@ -155,7 +155,13 @@ export function BudgetCreateForm({
         </Select>
       </FormField>
       {scope === "category" ? (
-        <fieldset className="form-field">
+        <fieldset
+          className="form-field"
+          aria-invalid={form.formState.errors.category_ids ? true : undefined}
+          aria-describedby={
+            form.formState.errors.category_ids ? "category_ids-error" : undefined
+          }
+        >
           <legend className="form-field__label">
             Categories <span aria-hidden="true">*</span>
           </legend>
@@ -197,7 +203,7 @@ export function BudgetCreateForm({
             </div>
           )}
           {form.formState.errors.category_ids ? (
-            <p className="form-field__error" role="alert">
+            <p id="category_ids-error" className="form-field__error" role="alert">
               {form.formState.errors.category_ids.message}
             </p>
           ) : null}
@@ -385,7 +391,13 @@ export function BudgetEditForm({
         </Select>
       </FormField>
       {scope === "category" ? (
-        <fieldset className="form-field">
+        <fieldset
+          className="form-field"
+          aria-invalid={form.formState.errors.category_ids ? true : undefined}
+          aria-describedby={
+            form.formState.errors.category_ids ? "category_ids-error" : undefined
+          }
+        >
           <legend className="form-field__label">
             Categories <span aria-hidden="true">*</span>
           </legend>
@@ -422,7 +434,7 @@ export function BudgetEditForm({
             </div>
           )}
           {form.formState.errors.category_ids ? (
-            <p className="form-field__error" role="alert">
+            <p id="category_ids-error" className="form-field__error" role="alert">
               {form.formState.errors.category_ids.message}
             </p>
           ) : null}

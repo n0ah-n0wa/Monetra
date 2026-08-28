@@ -298,7 +298,7 @@ export function ImportPage() {
 
       {accountsQuery.isError ? (
         <ErrorState
-          title="Could not load accounts"
+          title="Unable to load accounts"
           onRetry={() => accountsQuery.refetch()}
         />
       ) : null}
@@ -307,11 +307,9 @@ export function ImportPage() {
         <EmptyState
           title="No active accounts"
           description="Create an account before importing transactions."
-        >
-          <Link className="btn btn--primary btn--md" to={routes.accounts}>
-            Go to accounts
-          </Link>
-        </EmptyState>
+          actionLabel="Go to accounts"
+          actionHref={routes.accounts}
+        />
       ) : null}
 
       {uploadMutation.isPending ? (
@@ -443,12 +441,15 @@ export function ImportPage() {
           ) : null}
           {recentImportsQuery.isError ? (
             <ErrorState
-              title="Could not load import history"
+              title="Unable to load import history"
               onRetry={() => recentImportsQuery.refetch()}
             />
           ) : null}
           {recentImportsQuery.isSuccess && recentJobs.length === 0 ? (
-            <p className="import-section__description">No imports yet.</p>
+            <EmptyState
+              title="No imports yet"
+              description="Uploaded CSV files will appear here after you import transactions."
+            />
           ) : null}
           {recentImportsQuery.isSuccess && recentJobs.length > 0 ? (
             <ul className="data-list">

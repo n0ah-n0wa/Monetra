@@ -96,6 +96,8 @@ export function AccountsPage() {
         <EmptyState
           title="No accounts yet"
           description="Create your first account to start tracking balances."
+          actionLabel="Add account"
+          onAction={() => setDialog({ type: "create" })}
         />
       ) : null}
 
@@ -174,6 +176,7 @@ export function AccountsPage() {
       <Modal
         open={dialog?.type === "edit"}
         title="Edit account"
+        description="Update the account name or archive it when you no longer need it."
         onClose={() => setDialog(null)}
       >
         {editingAccount ? (

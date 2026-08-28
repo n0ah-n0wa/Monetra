@@ -81,7 +81,7 @@ describe("AccountsPage", () => {
     renderAccounts();
 
     expect(await screen.findByText(/no accounts yet/i)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /add account/i })).toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: /add account/i })).toHaveLength(2);
   });
 
   it("lists accounts and opens create dialog with validation", async () => {
@@ -99,7 +99,7 @@ describe("AccountsPage", () => {
     expect(await screen.findByText("Checking")).toBeInTheDocument();
     expect(screen.getByText(/\$250\.50/)).toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: /^add account$/i }));
+    await user.click(screen.getAllByRole("button", { name: /^add account$/i })[0]!);
     const dialog = await screen.findByRole("dialog");
     expect(dialog).toBeInTheDocument();
     await user.clear(within(dialog).getByLabelText(/^name/i));
@@ -126,7 +126,7 @@ describe("AccountsPage", () => {
     renderAccounts();
     await screen.findByText(/no accounts yet/i);
 
-    await user.click(screen.getByRole("button", { name: /^add account$/i }));
+    await user.click(screen.getAllByRole("button", { name: /^add account$/i })[0]!);
     const dialog = await screen.findByRole("dialog");
     await user.type(within(dialog).getByLabelText(/^name/i), "Savings");
     await user.selectOptions(within(dialog).getByLabelText(/^type/i), "savings");

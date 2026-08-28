@@ -21,6 +21,8 @@ type DashboardWidgetProps = {
   isEmpty?: boolean;
   emptyTitle?: string;
   emptyDescription?: string;
+  emptyActionLabel?: string;
+  emptyActionHref?: string;
   skeletonLines?: number;
   className?: string;
   children: ReactNode;
@@ -36,6 +38,8 @@ export function DashboardWidget({
   isEmpty = false,
   emptyTitle = "No data yet",
   emptyDescription,
+  emptyActionLabel,
+  emptyActionHref,
   skeletonLines = 3,
   className,
   children,
@@ -52,7 +56,12 @@ export function DashboardWidget({
           <ErrorState error={error} title="Unable to load" onRetry={onRetry} />
         ) : null}
         {!isLoading && !isError && isEmpty ? (
-          <EmptyState title={emptyTitle} description={emptyDescription} />
+          <EmptyState
+            title={emptyTitle}
+            description={emptyDescription}
+            actionLabel={emptyActionLabel}
+            actionHref={emptyActionHref}
+          />
         ) : null}
         {!isLoading && !isError && !isEmpty ? children : null}
       </CardContent>

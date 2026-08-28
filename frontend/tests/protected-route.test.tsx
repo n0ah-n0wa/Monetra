@@ -131,7 +131,7 @@ describe("session and logout", () => {
           path: routes.dashboard,
           element: (
             <div>
-              <Header onMenuToggle={() => undefined} />
+              <Header sidebarOpen={false} onMenuToggle={() => undefined} />
               <div>Dashboard body</div>
             </div>
           ),

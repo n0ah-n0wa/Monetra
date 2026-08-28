@@ -1,5 +1,6 @@
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { ButtonLink } from "@/components/ui/ButtonLink";
 import { BudgetUtilizationWidget } from "@/features/dashboard/components/BudgetUtilizationWidget";
 import { FinancialGoalsWidget } from "@/features/dashboard/components/FinancialGoalsWidget";
 import { FinancialInsightsWidget } from "@/features/dashboard/components/FinancialInsightsWidget";
@@ -10,6 +11,7 @@ import {
   SummaryStatsRow,
 } from "@/features/dashboard/components/SummaryStatsWidget";
 import { useAuth } from "@/features/auth/hooks";
+import { routes } from "@/lib/routes";
 
 export function DashboardPage() {
   const { user } = useAuth();
@@ -23,7 +25,17 @@ export function DashboardPage() {
             ? `Welcome back. Reporting in ${user.reporting_currency}.`
             : "Your financial overview."
         }
+        actions={
+          <ButtonLink to={routes.transactionNew} size="sm">
+            Add transaction
+          </ButtonLink>
+        }
       />
+
+      <p className="responsive-chart-note">
+        Category charts are hidden on small screens. See the spending table in Analytics
+        for details.
+      </p>
 
       <SummaryStatsRow />
       <SummaryStatsLinks />

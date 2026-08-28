@@ -1,6 +1,7 @@
 import { NavLink } from "react-router-dom";
 import { NotificationUnreadBadge } from "@/features/notifications/components/NotificationUnreadBadge";
 import { navItems, routes } from "@/lib/routes";
+import { useMediaQuery } from "@/lib/use-media-query";
 import { cn } from "@/lib/utils";
 
 type SidebarProps = {
@@ -9,11 +10,14 @@ type SidebarProps = {
 };
 
 export function Sidebar({ open, onNavigate }: SidebarProps) {
+  const isMobileNav = useMediaQuery("(max-width: 900px)");
+
   return (
     <aside
       id="main-navigation"
       className={cn("sidebar", open && "sidebar--open")}
       aria-label="Main navigation"
+      aria-hidden={isMobileNav && !open ? true : undefined}
     >
       <div className="sidebar__brand">
         <span className="sidebar__logo">Monetra</span>

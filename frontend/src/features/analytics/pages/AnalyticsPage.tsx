@@ -48,8 +48,13 @@ export function AnalyticsPage() {
     <PageContainer>
       <PageHeader
         title="Analytics"
-        description="Interactive charts backed by server-side financial analytics. Tables below each chart provide accessible summaries."
+        description="Explore spending trends, cash flow, and budget utilization. Summary tables accompany each chart."
       />
+
+      <p className="responsive-chart-note">
+        Charts are hidden on small screens. Use the data tables below each panel for the
+        same information.
+      </p>
 
       <AnalyticsFilters
         filters={filters}

@@ -180,6 +180,40 @@ export function TransactionForm({
         </FormField>
       </div>
 
+      <FormField
+        id="amount"
+        label="Amount"
+        required
+        description="Enter the exact amount; balances are calculated on the server."
+        error={form.formState.errors.amount}
+      >
+        <Input
+          id="amount"
+          inputMode="decimal"
+          autoComplete="off"
+          hasError={Boolean(form.formState.errors.amount)}
+          {...amountRegister}
+          ref={(element: HTMLInputElement | null) => {
+            amountRegister.ref(element);
+            amountRef.current = element;
+          }}
+        />
+      </FormField>
+
+      <FormField
+        id="description"
+        label="Description"
+        required
+        error={form.formState.errors.description}
+      >
+        <Input
+          id="description"
+          autoComplete="off"
+          hasError={Boolean(form.formState.errors.description)}
+          {...form.register("description")}
+        />
+      </FormField>
+
       <div className="transaction-form__grid">
         <FormField
           id="account_id"
@@ -227,40 +261,6 @@ export function TransactionForm({
           </Select>
         </FormField>
       </div>
-
-      <FormField
-        id="amount"
-        label="Amount"
-        required
-        description="Enter the exact amount; balances are calculated on the server."
-        error={form.formState.errors.amount}
-      >
-        <Input
-          id="amount"
-          inputMode="decimal"
-          autoComplete="off"
-          hasError={Boolean(form.formState.errors.amount)}
-          {...amountRegister}
-          ref={(element: HTMLInputElement | null) => {
-            amountRegister.ref(element);
-            amountRef.current = element;
-          }}
-        />
-      </FormField>
-
-      <FormField
-        id="description"
-        label="Description"
-        required
-        error={form.formState.errors.description}
-      >
-        <Input
-          id="description"
-          autoComplete="off"
-          hasError={Boolean(form.formState.errors.description)}
-          {...form.register("description")}
-        />
-      </FormField>
 
       <FormField id="notes" label="Notes" error={form.formState.errors.notes}>
         <Input id="notes" autoComplete="off" {...form.register("notes")} />

@@ -230,10 +230,15 @@ describe("Notification unread badge", () => {
   });
 
   it("shows unread count in the header link", async () => {
-    renderWithAuth(<Header onMenuToggle={() => undefined} />, {
+    renderWithAuth(<Header sidebarOpen={false} onMenuToggle={() => undefined} />, {
       authenticated: true,
       initialEntries: ["/"],
-      routes: [{ path: "*", element: <Header onMenuToggle={() => undefined} /> }],
+      routes: [
+        {
+          path: "*",
+          element: <Header sidebarOpen={false} onMenuToggle={() => undefined} />,
+        },
+      ],
     });
 
     const link = await screen.findByRole("link", { name: /notifications, 3 unread/i });

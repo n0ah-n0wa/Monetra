@@ -138,7 +138,7 @@ describe("BudgetsPage", () => {
     renderBudgets();
     await screen.findByText(/no budgets yet/i);
 
-    await user.click(screen.getByRole("button", { name: /^add budget$/i }));
+    await user.click(screen.getAllByRole("button", { name: /^add budget$/i })[0]!);
     const dialog = await screen.findByRole("dialog");
     await user.click(within(dialog).getByRole("button", { name: /create budget/i }));
     expect(await screen.findByText(/budget name is required/i)).toBeInTheDocument();
@@ -158,7 +158,7 @@ describe("BudgetsPage", () => {
     renderBudgets();
     await screen.findByText(/no budgets yet/i);
 
-    await user.click(screen.getByRole("button", { name: /^add budget$/i }));
+    await user.click(screen.getAllByRole("button", { name: /^add budget$/i })[0]!);
     const dialog = await screen.findByRole("dialog");
     await user.type(within(dialog).getByLabelText(/^name/i), "Groceries");
     await user.type(within(dialog).getByLabelText(/^amount/i), "500");

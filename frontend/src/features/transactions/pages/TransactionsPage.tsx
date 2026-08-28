@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
-import { Link } from "react-router-dom";
 import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
+import { ButtonLink } from "@/components/ui/ButtonLink";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { EmptyState } from "@/components/states/EmptyState";
@@ -80,9 +80,7 @@ export function TransactionsPage() {
             >
               Export CSV
             </Button>
-            <Link className="btn btn--primary btn--md" to={routes.transactionNew}>
-              Add transaction
-            </Link>
+            <ButtonLink to={routes.transactionNew}>Add transaction</ButtonLink>
           </>
         }
       />
@@ -120,23 +118,20 @@ export function TransactionsPage() {
 
       {transactionsQuery.isPending ? (
         <LoadingState title="Loading transactions" />
-      ) : null}
-      {transactionsQuery.isError ? (
+      ) : transactionsQuery.isError ? (
         <ErrorState
           error={transactionsQuery.error}
           title="Unable to load transactions"
           onRetry={() => void transactionsQuery.refetch()}
         />
-      ) : null}
-
-      {transactionsQuery.isSuccess && transactionsQuery.data.items.length === 0 ? (
+      ) : transactionsQuery.data.items.length === 0 ? (
         <EmptyState
           title="No transactions found"
           description="Adjust filters or record your first transaction."
+          actionLabel="Add transaction"
+          actionHref={routes.transactionNew}
         />
-      ) : null}
-
-      {transactionsQuery.isSuccess && transactionsQuery.data.items.length > 0 ? (
+      ) : (
         <>
           <TransactionList
             transactions={transactionsQuery.data.items}
@@ -151,7 +146,7 @@ export function TransactionsPage() {
             onPageChange={(page) => setFilters((current) => ({ ...current, page }))}
           />
         </>
-      ) : null}
+      )}
 
       <ConfirmDialog
         open={Boolean(deleting)}

@@ -25,6 +25,8 @@ export function RecentTransactionsWidget() {
       isEmpty={query.isSuccess && query.data.items.length === 0}
       emptyTitle="No transactions yet"
       emptyDescription="Record income or expenses to see recent activity here."
+      emptyActionLabel="Add transaction"
+      emptyActionHref={routes.transactionNew}
       skeletonLines={5}
     >
       <div className="dashboard-list" role="list" aria-label="Recent transactions">

@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import type { Account } from "@/features/accounts/api";
+import { AccessibleDataTable } from "@/features/analytics/components/AccessibleDataTable";
 import type { Category } from "@/features/categories/api";
 import { formatTransactionType, type Transaction } from "@/features/transactions/api";
 import { routes } from "@/lib/routes";
@@ -28,78 +29,85 @@ export function TransactionList({
   onDelete,
 }: TransactionListProps) {
   return (
-    <div className="transaction-table" role="table" aria-label="Transactions">
-      <div className="transaction-table__header" role="row">
-        <span role="columnheader">Date</span>
-        <span role="columnheader">Description</span>
-        <span role="columnheader">Account</span>
-        <span role="columnheader">Category</span>
-        <span role="columnheader">Type</span>
-        <span role="columnheader" className="transaction-table__amount">
-          Amount
-        </span>
-        <span role="columnheader">Actions</span>
-      </div>
-      {transactions.map((transaction) => {
-        const accountName = lookupName(accounts, transaction.account_id);
-        const categoryName = lookupName(categories, transaction.category_id);
-        const amountLabel = formatMoneyDisplay(
-          transaction.amount,
-          transaction.currency,
-        );
-
-        return (
-          <article key={transaction.id} className="transaction-table__row" role="row">
-            <span role="cell" aria-label={`Date: ${transaction.transaction_date}`}>
-              {transaction.transaction_date}
-            </span>
-            <span role="cell" aria-label={`Description: ${transaction.description}`}>
-              <Link
-                className="data-card__title"
-                to={routes.transactionDetail(transaction.id)}
-              >
-                {transaction.description}
-              </Link>
-            </span>
-            <span role="cell" aria-label={`Account: ${accountName}`}>
-              {accountName}
-            </span>
-            <span role="cell" aria-label={`Category: ${categoryName}`}>
-              {categoryName}
-            </span>
-            <span
-              role="cell"
-              aria-label={`Type: ${formatTransactionType(transaction.transaction_type)}`}
+    <AccessibleDataTable
+      caption="Transactions"
+      className="transaction-data-table"
+      rows={transactions}
+      getRowKey={(transaction) => transaction.id}
+      columns={[
+        {
+          key: "date",
+          header: "Date",
+          cell: (transaction) => transaction.transaction_date,
+        },
+        {
+          key: "description",
+          header: "Description",
+          cell: (transaction) => (
+            <Link
+              className="data-card__title"
+              to={routes.transactionDetail(transaction.id)}
             >
-              <Badge
-                variant={
-                  transaction.transaction_type === "income" ? "success" : "neutral"
-                }
-              >
-                {formatTransactionType(transaction.transaction_type)}
-              </Badge>
-            </span>
-            <span
-              role="cell"
-              className="transaction-table__amount"
-              aria-label={`Amount: ${amountLabel}`}
+              {transaction.description}
+            </Link>
+          ),
+        },
+        {
+          key: "account",
+          header: "Account",
+          cell: (transaction) => lookupName(accounts, transaction.account_id),
+        },
+        {
+          key: "category",
+          header: "Category",
+          cell: (transaction) => lookupName(categories, transaction.category_id),
+        },
+        {
+          key: "type",
+          header: "Type",
+          cell: (transaction) => (
+            <Badge
+              variant={
+                transaction.transaction_type === "income" ? "success" : "neutral"
+              }
             >
-              {amountLabel}
-            </span>
-            <span role="cell" className="transaction-table__actions">
+              {formatTransactionType(transaction.transaction_type)}
+            </Badge>
+          ),
+        },
+        {
+          key: "amount",
+          header: "Amount",
+          align: "right",
+          cellClassName: "transaction-data-table__amount",
+          cell: (transaction) =>
+            formatMoneyDisplay(transaction.amount, transaction.currency),
+        },
+        {
+          key: "actions",
+          header: "Actions",
+          cellClassName: "transaction-data-table__actions",
+          cell: (transaction) => (
+            <>
               <Link
                 className="btn btn--secondary btn--sm"
                 to={routes.transactionDetail(transaction.id)}
+                aria-label={`View ${transaction.description}`}
               >
-                Edit
+                View
               </Link>
-              <Button size="sm" variant="danger" onClick={() => onDelete(transaction)}>
+              <Button
+                size="sm"
+                variant="danger"
+                onClick={() => onDelete(transaction)}
+                aria-label={`Delete ${transaction.description}`}
+              >
                 Delete
               </Button>
-            </span>
-          </article>
-        );
-      })}
-    </div>
+            </>
+          ),
+        },
+      ]}
+    />
   );
 }

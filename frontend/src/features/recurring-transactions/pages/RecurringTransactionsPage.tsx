@@ -107,6 +107,11 @@ export function RecurringTransactionsPage() {
           <Button
             onClick={() => setDialog({ type: "create" })}
             disabled={referenceDataLoading || accounts.length === 0}
+            title={
+              accounts.length === 0 && !referenceDataLoading
+                ? "Create an account first"
+                : undefined
+            }
           >
             Add recurring transaction
           </Button>
@@ -145,6 +150,13 @@ export function RecurringTransactionsPage() {
         </Alert>
       ) : null}
 
+      {!referenceDataLoading && accounts.length === 0 ? (
+        <Alert variant="warning" title="No accounts available">
+          Create an account before scheduling recurring transactions.{" "}
+          <Link to={routes.accounts}>Go to accounts</Link>
+        </Alert>
+      ) : null}
+
       {recurringQuery.isPending ? (
         <LoadingState title="Loading recurring transactions" />
       ) : null}
@@ -163,6 +175,11 @@ export function RecurringTransactionsPage() {
             accounts.length === 0
               ? "Create an account first, then add a recurring schedule."
               : "Create a recurring transaction to automate scheduled income or expenses."
+          }
+          actionLabel={accounts.length === 0 ? "Create account" : "Add recurring transaction"}
+          actionHref={accounts.length === 0 ? routes.accounts : undefined}
+          onAction={
+            accounts.length === 0 ? undefined : () => setDialog({ type: "create" })
           }
         />
       ) : null}

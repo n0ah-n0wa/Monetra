@@ -51,7 +51,7 @@ export function ResetPasswordPage() {
   });
 
   return (
-    <AuthLayout>
+    <AuthLayout pageTitle="Reset password">
       <Card>
         <CardHeader>
           <CardTitle>Choose a new password</CardTitle>
@@ -95,7 +95,7 @@ export function ResetPasswordPage() {
                 id="new_password"
                 label="New password"
                 required
-                description="Password requirements are enforced by the server."
+                description="At least 8 characters with one letter and one number."
                 error={form.formState.errors.new_password}
               >
                 <Input

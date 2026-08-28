@@ -126,7 +126,7 @@ export function NotificationsPage() {
         {notificationsQuery.isError ? (
           <ErrorState
             error={notificationsQuery.error}
-            title="Could not load notifications"
+            title="Unable to load notifications"
             onRetry={() => void notificationsQuery.refetch()}
           />
         ) : null}
@@ -174,7 +174,7 @@ export function NotificationsPage() {
         {preferencesQuery.isError ? (
           <ErrorState
             error={preferencesQuery.error}
-            title="Could not load notification preferences"
+            title="Unable to load notification preferences"
             onRetry={() => void preferencesQuery.refetch()}
           />
         ) : null}

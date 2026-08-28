@@ -100,6 +100,8 @@ export function BudgetsPage() {
         <EmptyState
           title="No budgets yet"
           description="Create a budget to track spending targets."
+          actionLabel="Add budget"
+          onAction={() => setDialog({ type: "create" })}
         />
       ) : null}
 

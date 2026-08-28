@@ -35,7 +35,7 @@ export function RegisterPage() {
   });
 
   return (
-    <AuthLayout>
+    <AuthLayout pageTitle="Create account">
       <Card>
         <CardHeader>
           <CardTitle>Create account</CardTitle>
@@ -68,7 +68,7 @@ export function RegisterPage() {
               id="password"
               label="Password"
               required
-              description="Password requirements are enforced by the server."
+              description="At least 8 characters with one letter and one number."
               error={form.formState.errors.password}
             >
               <Input

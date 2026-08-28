@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, type ReactNode } from "react";
 import { Button } from "@/components/ui/Button";
+import { focusInitialElement, trapTabKey } from "@/lib/focus-trap";
 import { cn } from "@/lib/utils";
 
 type ModalProps = {
@@ -30,11 +31,17 @@ export function Modal({
 
     const previouslyFocused = document.activeElement as HTMLElement | null;
     const node = dialogRef.current;
-    node?.focus();
+    if (node) {
+      focusInitialElement(node);
+    }
 
     function onKeyDown(event: KeyboardEvent) {
       if (event.key === "Escape") {
         onClose();
+        return;
+      }
+      if (node) {
+        trapTabKey(event, node);
       }
     }
 
@@ -49,6 +56,27 @@ export function Modal({
     };
   }, [open, onClose]);
 
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    const hiddenSiblings: Array<{ element: HTMLElement; inert: boolean }> = [];
+    for (const child of Array.from(document.body.children)) {
+      if (!(child instanceof HTMLElement) || child.classList.contains("modal-root")) {
+        continue;
+      }
+      hiddenSiblings.push({ element: child, inert: child.inert });
+      child.inert = true;
+    }
+
+    return () => {
+      for (const { element, inert } of hiddenSiblings) {
+        element.inert = inert;
+      }
+    };
+  }, [open]);
+
   if (!open) {
     return null;
   }
@@ -60,6 +88,7 @@ export function Modal({
         className="modal-backdrop"
         aria-label="Close dialog"
         onClick={onClose}
+        tabIndex={-1}
       />
       <div
         ref={dialogRef}

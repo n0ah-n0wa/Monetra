@@ -1,9 +1,11 @@
 import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
+import { EmptyState } from "@/components/states/EmptyState";
 import { ErrorState } from "@/components/states/ErrorState";
 import { LoadingState } from "@/components/states/LoadingState";
+import { ButtonLink } from "@/components/ui/ButtonLink";
 import { Alert } from "@/components/ui/Alert";
 import { useAccountsQuery } from "@/features/accounts/hooks";
 import { useCategoriesQuery } from "@/features/categories/hooks";
@@ -25,7 +27,11 @@ export function TransactionCreatePage() {
 
   if (accountsQuery.isPending || categoriesQuery.isPending) {
     return (
-      <PageContainer>
+      <PageContainer narrow>
+        <PageHeader
+          title="Add transaction"
+          description="Record income or expenses quickly."
+        />
         <LoadingState title="Preparing transaction form" />
       </PageContainer>
     );
@@ -33,7 +39,8 @@ export function TransactionCreatePage() {
 
   if (accountsQuery.isError || categoriesQuery.isError) {
     return (
-      <PageContainer>
+      <PageContainer narrow>
+        <PageHeader title="Add transaction" />
         <ErrorState
           error={accountsQuery.error ?? categoriesQuery.error}
           title="Unable to load form data"
@@ -51,14 +58,17 @@ export function TransactionCreatePage() {
 
   if (accounts.length === 0) {
     return (
-      <PageContainer>
+      <PageContainer narrow>
         <PageHeader
           title="Add transaction"
           description="Create an account before recording transactions."
         />
-        <Alert variant="warning" title="No accounts available">
-          <Link to={routes.accounts}>Create an account</Link> to continue.
-        </Alert>
+        <EmptyState
+          title="No accounts available"
+          description="Add an account to start recording transactions."
+          actionLabel="Create account"
+          actionHref={routes.accounts}
+        />
       </PageContainer>
     );
   }
@@ -69,9 +79,9 @@ export function TransactionCreatePage() {
         title="Add transaction"
         description="Optimized for fast repeated entry. Amount, description, and notes reset after each save."
         actions={
-          <Link className="btn btn--secondary btn--sm" to={routes.transactions}>
+          <ButtonLink to={routes.transactions} variant="secondary" size="sm">
             Back to list
-          </Link>
+          </ButtonLink>
         }
       />
 

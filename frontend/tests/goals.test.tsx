@@ -124,7 +124,7 @@ describe("GoalsPage", () => {
     renderGoals();
     await screen.findByText(/no goals yet/i);
 
-    await user.click(screen.getByRole("button", { name: /^add goal$/i }));
+    await user.click(screen.getAllByRole("button", { name: /^add goal$/i })[0]!);
     const dialog = await screen.findByRole("dialog");
     await user.click(within(dialog).getByRole("button", { name: /create goal/i }));
     expect(await screen.findByText(/goal name is required/i)).toBeInTheDocument();
@@ -144,7 +144,7 @@ describe("GoalsPage", () => {
     renderGoals();
     await screen.findByText(/no goals yet/i);
 
-    await user.click(screen.getByRole("button", { name: /^add goal$/i }));
+    await user.click(screen.getAllByRole("button", { name: /^add goal$/i })[0]!);
     const dialog = await screen.findByRole("dialog");
     await user.type(within(dialog).getByLabelText(/^name/i), "Vacation");
     await user.type(within(dialog).getByLabelText(/^target amount/i), "1000");

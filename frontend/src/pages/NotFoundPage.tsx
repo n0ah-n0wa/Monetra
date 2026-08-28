@@ -6,7 +6,7 @@ export function NotFoundPage() {
   return (
     <PageContainer narrow>
       <div className="state state--empty">
-        <p className="state__title">Page not found</p>
+        <h1 className="state__title">Page not found</h1>
         <p className="state__description">The page you requested does not exist.</p>
         <Link className="btn btn--primary btn--md" to={routes.dashboard}>
           Go to dashboard

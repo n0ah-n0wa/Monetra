@@ -41,7 +41,7 @@ export function ForgotPasswordPage() {
   });
 
   return (
-    <AuthLayout>
+    <AuthLayout pageTitle="Forgot password">
       <Card>
         <CardHeader>
           <CardTitle>Forgot password</CardTitle>

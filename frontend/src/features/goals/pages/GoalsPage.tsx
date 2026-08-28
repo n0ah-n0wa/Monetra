@@ -116,6 +116,8 @@ export function GoalsPage() {
         <EmptyState
           title="No goals yet"
           description="Create a savings goal to track long-term targets."
+          actionLabel="Add goal"
+          onAction={() => setDialog({ type: "create" })}
         />
       ) : null}
 

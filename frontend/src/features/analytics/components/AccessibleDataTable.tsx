@@ -1,10 +1,13 @@
 import type { ReactNode } from "react";
+import { cn } from "@/lib/utils";
 
 type Column<T> = {
   key: string;
   header: string;
   cell: (row: T) => ReactNode;
   align?: "left" | "right";
+  headerClassName?: string;
+  cellClassName?: string;
 };
 
 type AccessibleDataTableProps<T> = {
@@ -13,6 +16,7 @@ type AccessibleDataTableProps<T> = {
   rows: T[];
   getRowKey: (row: T) => string;
   footer?: ReactNode;
+  className?: string;
 };
 
 export function AccessibleDataTable<T>({
@@ -21,9 +25,10 @@ export function AccessibleDataTable<T>({
   rows,
   getRowKey,
   footer,
+  className,
 }: AccessibleDataTableProps<T>) {
   return (
-    <table className="dashboard-table analytics-table">
+    <table className={cn("dashboard-table", className)}>
       <caption className="sr-only">{caption}</caption>
       <thead>
         <tr>
@@ -31,6 +36,7 @@ export function AccessibleDataTable<T>({
             <th
               key={column.key}
               scope="col"
+              className={column.headerClassName}
               style={column.align === "right" ? { textAlign: "right" } : undefined}
             >
               {column.header}
@@ -44,6 +50,7 @@ export function AccessibleDataTable<T>({
             {columns.map((column) => (
               <td
                 key={column.key}
+                className={column.cellClassName}
                 style={column.align === "right" ? { textAlign: "right" } : undefined}
               >
                 {column.cell(row)}

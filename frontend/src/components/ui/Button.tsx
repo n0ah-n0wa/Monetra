@@ -1,4 +1,5 @@
 import type { ButtonHTMLAttributes, ReactNode } from "react";
+import { Spinner } from "@/components/ui/Spinner";
 import { cn } from "@/lib/utils";
 
 type ButtonVariant = "primary" | "secondary" | "ghost" | "danger";
@@ -28,7 +29,8 @@ export function Button({
       aria-busy={loading}
       {...props}
     >
-      {loading ? "Please wait…" : children}
+      {loading ? <Spinner size="sm" /> : null}
+      {children}
     </button>
   );
 }

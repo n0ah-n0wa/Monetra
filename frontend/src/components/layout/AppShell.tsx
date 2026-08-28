@@ -8,6 +8,9 @@ export function AppShell() {
 
   return (
     <div className="app-shell">
+      <a className="skip-link" href="#main-content">
+        Skip to main content
+      </a>
       <Sidebar open={sidebarOpen} onNavigate={() => setSidebarOpen(false)} />
       {sidebarOpen ? (
         <button
@@ -18,8 +21,11 @@ export function AppShell() {
         />
       ) : null}
       <div className="app-shell__main">
-        <Header onMenuToggle={() => setSidebarOpen((open) => !open)} />
-        <main className="app-shell__content" id="main-content">
+        <Header
+          sidebarOpen={sidebarOpen}
+          onMenuToggle={() => setSidebarOpen((open) => !open)}
+        />
+        <main className="app-shell__content" id="main-content" tabIndex={-1}>
           <Outlet />
         </main>
       </div>

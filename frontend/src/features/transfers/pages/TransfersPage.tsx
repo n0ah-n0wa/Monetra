@@ -1,5 +1,4 @@
-import { useMemo } from "react";
-import { Link } from "react-router-dom";
+import { useMemo, useState } from "react";
 import { PageContainer } from "@/components/layout/PageContainer";
 import { PageHeader } from "@/components/layout/PageHeader";
 import { FormError } from "@/components/forms/FormError";
@@ -21,6 +20,7 @@ import {
 import { applyApiErrorToForm, useZodForm } from "@/lib/form";
 import { formatMoneyDisplay } from "@/lib/money";
 import { routes } from "@/lib/routes";
+import { AccessibleDataTable } from "@/features/analytics/components/AccessibleDataTable";
 
 function todayIsoDate(): string {
   return new Date().toISOString().slice(0, 10);
@@ -31,6 +31,7 @@ function accountLabel(account: Account): string {
 }
 
 export function TransfersPage() {
+  const [transferSuccess, setTransferSuccess] = useState(false);
   const accountsQuery = useAccountsQuery({ status: "active", page_size: 100 });
   const transfersQuery = useTransfersQuery({ page: 1, page_size: 20 });
   const createMutation = useCreateTransferMutation();
@@ -69,6 +70,10 @@ export function TransfersPage() {
   if (accountsQuery.isPending) {
     return (
       <PageContainer>
+        <PageHeader
+          title="Transfers"
+          description="Move money between accounts. Balances update on the server."
+        />
         <LoadingState title="Loading accounts" />
       </PageContainer>
     );
@@ -77,8 +82,10 @@ export function TransfersPage() {
   if (accountsQuery.isError) {
     return (
       <PageContainer>
+        <PageHeader title="Transfers" description="Move money between your accounts." />
         <ErrorState
           error={accountsQuery.error}
+          title="Unable to load accounts"
           onRetry={() => void accountsQuery.refetch()}
         />
       </PageContainer>
@@ -92,11 +99,9 @@ export function TransfersPage() {
         <EmptyState
           title="At least two accounts required"
           description="Create another account before transferring funds."
-        >
-          <Link className="btn btn--primary" to={routes.accounts}>
-            Manage accounts
-          </Link>
-        </EmptyState>
+          actionLabel="Manage accounts"
+          actionHref={routes.accounts}
+        />
       </PageContainer>
     );
   }
@@ -131,6 +136,7 @@ export function TransfersPage() {
         transaction_date: todayIsoDate(),
         description: "",
       });
+      setTransferSuccess(true);
     } catch (error) {
       applyApiErrorToForm(error, form.setError, "Unable to create transfer.");
     }
@@ -144,14 +150,27 @@ export function TransfersPage() {
       />
 
       <section className="card stack">
-        <h2 className="import-section__title">New transfer</h2>
+        <h2 className="section-title">New transfer</h2>
+        {transferSuccess ? (
+          <Alert variant="success" title="Transfer recorded">
+            Funds moved successfully. Enter another transfer below or review recent
+            activity.
+          </Alert>
+        ) : null}
         {crossCurrencyMismatch ? (
           <Alert variant="warning" title="Currency mismatch">
             Selected accounts use different currencies. Choose accounts with the same
             currency.
           </Alert>
         ) : null}
-        <form className="stack" onSubmit={(event) => void onSubmit(event)} noValidate>
+        <form
+          className="stack"
+          onSubmit={(event) => {
+            setTransferSuccess(false);
+            void onSubmit(event);
+          }}
+          noValidate
+        >
           <FormField
             id="source_account_id"
             label="From account"
@@ -243,7 +262,7 @@ export function TransfersPage() {
       </section>
 
       <section className="stack">
-        <h2 className="import-section__title">Recent transfers</h2>
+        <h2 className="section-title">Recent transfers</h2>
         {transfersQuery.isPending ? <LoadingState title="Loading transfers" /> : null}
         {transfersQuery.isError ? (
           <ErrorState
@@ -258,41 +277,49 @@ export function TransfersPage() {
           />
         ) : null}
         {transfersQuery.data && transfersQuery.data.items.length > 0 ? (
-          <div className="transaction-table" role="table" aria-label="Transfers">
-            <div className="transaction-table__header" role="row">
-              <span role="columnheader">Date</span>
-              <span role="columnheader">From</span>
-              <span role="columnheader">To</span>
-              <span role="columnheader">Description</span>
-              <span role="columnheader" className="transaction-table__amount">
-                Amount
-              </span>
-            </div>
-            {transfersQuery.data.items.map((transfer) => {
-              const source = accountById.get(transfer.source_account_id);
-              const destination = accountById.get(transfer.destination_account_id);
-              return (
-                <article
-                  key={transfer.id}
-                  className="transaction-table__row"
-                  role="row"
-                >
-                  <span role="cell">{transfer.transaction_date}</span>
-                  <span role="cell">{source?.name ?? transfer.source_account_id}</span>
-                  <span role="cell">
-                    {destination?.name ?? transfer.destination_account_id}
-                  </span>
-                  <span role="cell">{transfer.description ?? "—"}</span>
-                  <span role="cell" className="transaction-table__amount">
-                    {formatMoneyDisplay(
-                      transfer.source_amount,
-                      transfer.source_currency,
-                    )}
-                  </span>
-                </article>
-              );
-            })}
-          </div>
+          <AccessibleDataTable
+            caption="Transfers"
+            className="transaction-data-table"
+            rows={transfersQuery.data.items}
+            getRowKey={(transfer) => transfer.id}
+            columns={[
+              {
+                key: "date",
+                header: "Date",
+                cell: (transfer) => transfer.transaction_date,
+              },
+              {
+                key: "from",
+                header: "From",
+                cell: (transfer) =>
+                  accountById.get(transfer.source_account_id)?.name ??
+                  transfer.source_account_id,
+              },
+              {
+                key: "to",
+                header: "To",
+                cell: (transfer) =>
+                  accountById.get(transfer.destination_account_id)?.name ??
+                  transfer.destination_account_id,
+              },
+              {
+                key: "description",
+                header: "Description",
+                cell: (transfer) => transfer.description ?? "—",
+              },
+              {
+                key: "amount",
+                header: "Amount",
+                align: "right",
+                cellClassName: "transaction-data-table__amount",
+                cell: (transfer) =>
+                  formatMoneyDisplay(
+                    transfer.source_amount,
+                    transfer.source_currency,
+                  ),
+              },
+            ]}
+          />
         ) : null}
       </section>
     </PageContainer>

@@ -225,7 +225,10 @@ describe("auth schemas integration", () => {
     await user.type(screen.getByLabelText(/^password/i), "Password1");
     await user.click(screen.getByRole("button", { name: /sign in/i }));
 
-    expect(await screen.findByRole("button", { name: /please wait/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /sign in/i })).toHaveAttribute(
+      "aria-busy",
+      "true",
+    );
 
     resolveLogin({
       access_token: "token",
