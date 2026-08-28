@@ -20,3 +20,5 @@ The portfolio deployment target is a single AWS EC2 host with Docker Compose and
 - Local and production topologies stay similar.
 - HTTPS and certificate mounting are handled at Nginx in production.
 - Migration to RDS later does not require rewriting the application.
+
+See [docs/deployment/](../deployment/) for the full AWS EC2 runbook.

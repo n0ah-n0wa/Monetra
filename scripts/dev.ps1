@@ -20,6 +20,7 @@ param(
     "prod-up",
     "prod-down",
     "prod-verify",
+    "prod-clean-test",
     "verify",
     "loadtest"
   )]
@@ -174,6 +175,9 @@ Monetra development commands
 
       Write-Host "Production stack smoke checks passed."
     }
+  }
+  "prod-clean-test" {
+    & (Join-Path $PSScriptRoot "prod-clean-deploy-test.ps1")
   }
   "verify" {
     & $PSCommandPath lint

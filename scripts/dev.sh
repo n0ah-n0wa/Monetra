@@ -30,6 +30,7 @@ Monetra development commands
   ./scripts/dev.sh prod-up       Start production Compose stack
   ./scripts/dev.sh prod-down     Stop production Compose stack
   ./scripts/dev.sh prod-verify   Build and smoke-test production stack
+  ./scripts/dev.sh prod-clean-test  Clean-volume production deploy test
   ./scripts/dev.sh verify        Full quality gate
   ./scripts/dev.sh loadtest      Run API load tests (local stack)
 EOF
@@ -100,6 +101,9 @@ EOF
       exit 1
     fi
     echo "Production stack smoke checks passed."
+    ;;
+  prod-clean-test)
+    ./scripts/prod-clean-deploy-test.sh
     ;;
   verify)
     "$0" lint

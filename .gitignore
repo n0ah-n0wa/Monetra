@@ -49,6 +49,7 @@ Thumbs.db
 docker/postgres/data/
 nginx/certs/*
 !nginx/certs/.gitkeep
+backups/
 
 # Test artifacts
 .coverage.xml

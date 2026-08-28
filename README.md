@@ -106,6 +106,8 @@ This runs lint, typecheck, unit tests, frontend build, and Docker image builds.
 - [AGENTS.md](./AGENTS.md) — AI agent development rules
 - [docs/architecture.md](./docs/architecture.md) — architecture overview
 - [docs/development.md](./docs/development.md) — development workflow
+- [docs/deployment/](./docs/deployment/) — AWS EC2 production deployment
+- [docs/deployment/github-actions.md](./docs/deployment/github-actions.md) — CI/CD workflows and secrets
 - [docs/adr/](./docs/adr/) — architecture decision records
 
 ## License
