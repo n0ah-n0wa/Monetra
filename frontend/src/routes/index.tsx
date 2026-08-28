@@ -18,6 +18,7 @@ import { RecurringTransactionDetailPage } from "@/features/recurring-transaction
 import { RecurringTransactionsPage } from "@/features/recurring-transactions/pages/RecurringTransactionsPage";
 import { NotificationsPage } from "@/features/notifications/pages/NotificationsPage";
 import { SettingsPage } from "@/features/settings/pages/SettingsPage";
+import { TransfersPage } from "@/features/transfers/pages/TransfersPage";
 import { TransactionCreatePage } from "@/features/transactions/pages/TransactionCreatePage";
 import { TransactionDetailPage } from "@/features/transactions/pages/TransactionDetailPage";
 import { TransactionsPage } from "@/features/transactions/pages/TransactionsPage";
@@ -49,6 +50,7 @@ export const router = createBrowserRouter([
           { path: routes.accounts, element: <AccountsPage /> },
           { path: "/accounts/:id", element: <AccountDetailPage /> },
           { path: routes.transactions, element: <TransactionsPage /> },
+          { path: routes.transfers, element: <TransfersPage /> },
           { path: routes.transactionNew, element: <TransactionCreatePage /> },
           { path: "/transactions/:id", element: <TransactionDetailPage /> },
           { path: routes.recurring, element: <RecurringTransactionsPage /> },

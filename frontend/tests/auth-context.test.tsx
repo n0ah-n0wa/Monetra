@@ -56,7 +56,7 @@ describe("AuthProvider session handling", () => {
     vi.mocked(authApi.refreshSession).mockRejectedValue(new Error("no session"));
   });
 
-  it("does not clear the session when profile fetch fails with a server error", async () => {
+  it("shows a profile error state when /users/me fails with a server error", async () => {
     setAccessToken("token");
     vi.mocked(authApi.fetchCurrentUser).mockRejectedValue(
       new ApiError("Server error", 500, {}, "INTERNAL_ERROR"),
@@ -64,7 +64,11 @@ describe("AuthProvider session handling", () => {
 
     renderProtectedRoute();
 
-    expect(await screen.findByText("Protected dashboard")).toBeInTheDocument();
+    expect(await screen.findByText("Unable to load your profile")).toBeInTheDocument();
+    expect(screen.getByText("Server error")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Try again" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Sign out" })).toBeInTheDocument();
+    expect(screen.queryByText("Protected dashboard")).not.toBeInTheDocument();
     await waitFor(() => {
       expect(authApi.fetchCurrentUser).toHaveBeenCalled();
     });

@@ -483,6 +483,53 @@ async def test_confirm_rechecks_live_duplicates(auth_client: AsyncClient) -> Non
     assert balance_after_seed == balance_before - Decimal("7.0000")
 
 
+async def test_confirm_rejects_duplicates_when_skip_disabled(
+    auth_client: AsyncClient,
+) -> None:
+    token = await _register_token(auth_client)
+    account_id = await _create_account(auth_client, token)
+    categories = await auth_client.get(
+        f"{CATEGORIES_API}?include_system=false&page_size=100",
+        headers=_auth_headers(token),
+    )
+    expense_id = next(
+        item["id"]
+        for item in categories.json()["items"]
+        if item["name"] == "Groceries" and item["category_type"] == "expense"
+    )
+
+    csv = CSV_HEADER + "2026-06-02,expense,9.00,Reject Dup,Groceries,,\n"
+    upload = await auth_client.post(
+        API,
+        data={"account_id": account_id},
+        files={"file": ("dup.csv", BytesIO(csv.encode("utf-8")), "text/csv")},
+        headers=_auth_headers(token),
+    )
+    assert upload.status_code == 201, upload.text
+    job_id = upload.json()["id"]
+
+    await auth_client.post(
+        TRANSACTIONS_API,
+        json={
+            "account_id": account_id,
+            "category_id": expense_id,
+            "transaction_type": "expense",
+            "amount": "9.0000",
+            "description": "Reject Dup",
+            "transaction_date": "2026-06-02",
+        },
+        headers=_auth_headers(token),
+    )
+
+    confirm = await auth_client.post(
+        f"{API}/{job_id}/confirm",
+        json={"skip_duplicates": False},
+        headers=_auth_headers(token),
+    )
+    assert confirm.status_code == 409
+    assert confirm.json()["error"]["code"] == "IMPORT_DUPLICATE_ROW"
+
+
 async def test_path_traversal_filename_sanitized(auth_client: AsyncClient) -> None:
     token = await _register_token(auth_client)
     account_id = await _create_account(auth_client, token)

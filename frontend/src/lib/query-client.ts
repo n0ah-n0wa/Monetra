@@ -65,6 +65,10 @@ export const queryKeys = {
     list: (params?: Record<string, unknown>) => ["goals", "list", params] as const,
     detail: (id: string) => ["goals", "detail", id] as const,
   },
+  transfers: {
+    all: ["transfers"] as const,
+    list: (params?: Record<string, unknown>) => ["transfers", "list", params] as const,
+  },
   analytics: {
     root: ["analytics"] as const,
     incomeVsExpenses: (params?: Record<string, unknown>) =>

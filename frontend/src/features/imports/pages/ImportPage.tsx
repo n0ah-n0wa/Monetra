@@ -1,4 +1,5 @@
 import { useId, useState } from "react";
+import { getErrorMessage } from "@/api/errors";
 import { Link } from "react-router-dom";
 import { Alert } from "@/components/ui/Alert";
 import { PageContainer } from "@/components/layout/PageContainer";
@@ -373,7 +374,10 @@ export function ImportPage() {
 
             {uploadMutation.isError ? (
               <Alert variant="warning" title="Upload failed">
-                Could not upload the CSV. Check the file format and try again.
+                {getErrorMessage(
+                  uploadMutation.error,
+                  "Could not upload the CSV. Check the file format and try again.",
+                )}
               </Alert>
             ) : null}
 

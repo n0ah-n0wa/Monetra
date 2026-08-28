@@ -5,9 +5,14 @@ from __future__ import annotations
 from datetime import date
 from typing import Annotated
 
-from fastapi import APIRouter, Query, Request, status
+from fastapi import APIRouter, Depends, Query, Request, status
 
-from app.api.deps import CurrentUserDep, SessionDep, SettingsDep
+from app.api.deps import (
+    CurrentUserDep,
+    SessionDep,
+    SettingsDep,
+    enforce_exchange_rate_write_access,
+)
 from app.schemas.exchange_rates import (
     ConvertAmountRequest,
     ConvertAmountResponse,
@@ -31,6 +36,7 @@ async def create_exchange_rate(
     payload: ExchangeRateCreateRequest,
     session: SessionDep,
     _current_user: CurrentUserDep,
+    _: Annotated[None, Depends(enforce_exchange_rate_write_access)],
 ) -> ExchangeRateResponse:
     return await exchange_rate_service.store_rate(
         session,
@@ -128,6 +134,7 @@ async def fetch_exchange_rate(
     session: SessionDep,
     request: Request,
     _current_user: CurrentUserDep,
+    _: Annotated[None, Depends(enforce_exchange_rate_write_access)],
 ) -> ExchangeRateResponse:
     provider = get_exchange_rate_provider(request.app)
     return await exchange_rate_service.fetch_and_store_rate(

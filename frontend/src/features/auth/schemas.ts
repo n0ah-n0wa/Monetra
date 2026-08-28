@@ -2,7 +2,10 @@ import { z } from "zod";
 
 export const loginSchema = z.object({
   email: z.string().trim().email("Enter a valid email address."),
-  password: z.string().min(1, "Password is required."),
+  password: z
+    .string()
+    .min(1, "Password is required.")
+    .max(128, "Password must be 128 characters or fewer."),
 });
 
 export const registerSchema = loginSchema;
@@ -13,8 +16,14 @@ export const forgotPasswordSchema = z.object({
 
 export const resetPasswordSchema = z
   .object({
-    token: z.string().min(1, "Reset token is required."),
-    new_password: z.string().min(1, "Password is required."),
+    token: z
+      .string()
+      .min(1, "Reset token is required.")
+      .max(256, "Reset token is too long."),
+    new_password: z
+      .string()
+      .min(1, "Password is required.")
+      .max(128, "Password must be 128 characters or fewer."),
     confirm_password: z.string().min(1, "Confirm your password."),
   })
   .refine((values) => values.new_password === values.confirm_password, {

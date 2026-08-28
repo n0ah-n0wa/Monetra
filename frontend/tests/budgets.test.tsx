@@ -207,6 +207,8 @@ describe("BudgetsPage", () => {
         expect.objectContaining({ name: "Food" }),
       );
     });
+    const updatePayload = vi.mocked(budgetsApi.updateBudget).mock.calls[0]?.[1];
+    expect(updatePayload).not.toHaveProperty("category_ids");
   });
 
   it("archives a budget after confirmation", async () => {

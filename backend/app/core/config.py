@@ -43,7 +43,7 @@ class Settings(BaseSettings):
     database_echo: bool = False
 
     cors_origins: Annotated[list[str], NoDecode] = Field(
-        default_factory=lambda: ["http://localhost:5173"],
+        default_factory=lambda: ["http://localhost:5173", "http://127.0.0.1:5173"],
     )
 
     jwt_secret_key: str = Field(default=_DEFAULT_JWT_SECRET, min_length=32)

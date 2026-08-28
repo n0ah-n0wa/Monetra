@@ -66,7 +66,19 @@ export const budgetUpdateSchema = baseBudgetSchema
   .refine((values) => values.scope !== "category" || values.category_ids.length > 0, {
     message: "Select at least one category.",
     path: ["category_ids"],
-  });
+  })
+  .refine(
+    (values) => {
+      if (!values.end_date || !values.start_date) {
+        return true;
+      }
+      return values.start_date <= values.end_date;
+    },
+    {
+      message: "Start date must be on or before end date.",
+      path: ["end_date"],
+    },
+  );
 
 export type BudgetCreateFormValues = z.infer<typeof budgetCreateSchema>;
 export type BudgetUpdateFormValues = z.infer<typeof budgetUpdateSchema>;

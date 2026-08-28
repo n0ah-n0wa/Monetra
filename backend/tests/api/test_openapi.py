@@ -11,6 +11,11 @@ async def test_openapi_available_in_non_production(client: AsyncClient) -> None:
     payload = response.json()
     assert payload["info"]["title"] == "Monetra"
     assert "health" in {tag["name"] for tag in payload["tags"]}
+    assert "HTTPBearer" in payload["components"]["securitySchemes"]
+    accounts_get = payload["paths"]["/api/v1/accounts"]["get"]
+    assert accounts_get["security"] == [{"HTTPBearer": []}]
+    health_get = payload["paths"]["/health"]["get"]
+    assert "security" not in health_get
 
 
 def test_production_app_hides_openapi() -> None:

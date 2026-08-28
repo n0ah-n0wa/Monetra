@@ -74,6 +74,17 @@ export type SpendingByCategoryResponse = {
   }>;
 };
 
+export type SpendingTrendsResponse = {
+  period: AnalyticsPeriodResponse;
+  reporting_currency: string;
+  granularity: string;
+  total_expenses: string;
+  points: Array<{
+    bucket_date: string;
+    amount: string;
+  }>;
+};
+
 export type SavingsRateResponse = {
   period: AnalyticsPeriodResponse;
   reporting_currency: string;
@@ -188,6 +199,14 @@ export async function fetchSpendingByCategory(
   );
 }
 
+export async function fetchSpendingTrends(
+  params: AnalyticsQueryParams = {},
+): Promise<SpendingTrendsResponse> {
+  return apiClient.get<SpendingTrendsResponse>(
+    analyticsPath("spending-trends", params),
+  );
+}
+
 export async function fetchSavingsRate(
   params: AnalyticsQueryParams = {},
 ): Promise<SavingsRateResponse> {
@@ -207,6 +226,14 @@ export async function fetchLargestExpenses(
 ): Promise<LargestTransactionsResponse> {
   return apiClient.get<LargestTransactionsResponse>(
     analyticsPath("largest-expenses", params),
+  );
+}
+
+export async function fetchLargestIncome(
+  params: AnalyticsQueryParams = {},
+): Promise<LargestTransactionsResponse> {
+  return apiClient.get<LargestTransactionsResponse>(
+    analyticsPath("largest-income", params),
   );
 }
 

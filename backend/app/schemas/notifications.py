@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from datetime import datetime
 from typing import Any
 
 from pydantic import BaseModel, Field
@@ -16,10 +15,10 @@ class NotificationResponse(BaseModel):
     title: str
     message: str
     is_read: bool
-    read_at: datetime | None = None
+    read_at: str | None = None
     metadata: dict[str, Any] | None = None
-    created_at: datetime
-    updated_at: datetime
+    created_at: str
+    updated_at: str
 
 
 class NotificationPreferenceResponse(BaseModel):
@@ -30,7 +29,7 @@ class NotificationPreferenceResponse(BaseModel):
     import_completed_enabled: bool
     import_failed_enabled: bool
     email_enabled: bool
-    updated_at: datetime
+    updated_at: str
 
 
 class NotificationPreferenceUpdateRequest(BaseModel):

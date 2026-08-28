@@ -5,7 +5,7 @@ from __future__ import annotations
 import uuid
 
 import pytest
-from httpx import AsyncClient
+from httpx import ASGITransport, AsyncClient
 
 API = "/api/v1/exchange-rates"
 VALID_PASSWORD = "SecurePass1"
@@ -207,3 +207,37 @@ async def test_fetch_provider_unavailable_by_default(
     )
     assert response.status_code == 503
     assert response.json()["error"]["code"] == "EXCHANGE_RATE_PROVIDER_UNAVAILABLE"
+
+
+@pytest.mark.asyncio
+async def test_exchange_rate_write_forbidden_outside_test_env(
+    auth_client: AsyncClient,
+    app_settings,
+) -> None:
+    from app.main import create_app
+
+    dev_app = create_app(
+        settings=app_settings.model_copy(update={"app_env": "development"}),
+    )
+    transport = ASGITransport(app=dev_app)
+    async with (
+        dev_app.router.lifespan_context(dev_app),
+        AsyncClient(
+            transport=transport,
+            base_url="http://test",
+        ) as client,
+    ):
+        token = await _register_token(client, "dev-fx-blocked")
+        response = await client.post(
+            API,
+            json={
+                "base_currency": "EUR",
+                "quote_currency": "USD",
+                "rate": "1.10000000",
+                "rate_date": "2026-06-01",
+                "overwrite_existing": True,
+            },
+            headers=_auth(token),
+        )
+    assert response.status_code == 403
+    assert response.json()["error"]["code"] == "FORBIDDEN"

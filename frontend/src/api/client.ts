@@ -104,6 +104,52 @@ async function request<T>(
   return body as T;
 }
 
+async function requestBlob(
+  path: string,
+  options: RequestOptions = {},
+  allowRetry = true,
+): Promise<Blob> {
+  const hadToken = Boolean(accessToken);
+  const headers: Record<string, string> = {
+    ...((options.headers as Record<string, string> | undefined) ?? {}),
+    Accept: options.headers?.Accept ?? "text/csv",
+  };
+
+  if (options.auth !== false && accessToken) {
+    headers.Authorization = `Bearer ${accessToken}`;
+  }
+
+  const response = await fetch(`${API_BASE_URL}${API_PREFIX}${path}`, {
+    method: options.method ?? "GET",
+    headers,
+    credentials: "include",
+    signal: options.signal,
+  });
+
+  if (
+    response.status === 401 &&
+    allowRetry &&
+    options.auth !== false &&
+    refreshHandler
+  ) {
+    const newToken = await refreshHandler();
+    if (newToken) {
+      return requestBlob(path, options, false);
+    }
+    if (hadToken) {
+      sessionExpiredHandler?.();
+      throw new SessionExpiredError();
+    }
+  }
+
+  if (!response.ok) {
+    const body = await parseBody(response);
+    throw parseApiError(response.status, body);
+  }
+
+  return response.blob();
+}
+
 async function requestForm<T>(
   path: string,
   formData: FormData,
@@ -194,6 +240,13 @@ export const apiClient = {
     options?: Omit<RequestOptions, "method" | "body" | "headers">,
   ): Promise<T> {
     return requestForm<T>(path, formData, options);
+  },
+
+  getBlob(
+    path: string,
+    options?: Omit<RequestOptions, "method" | "body">,
+  ): Promise<Blob> {
+    return requestBlob(path, { ...options, method: "GET" });
   },
 };
 

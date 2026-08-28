@@ -22,6 +22,7 @@ from app.models.notification_preference import NotificationPreference
 from app.repositories import budget_repository as budget_repo
 from app.repositories import notification_repository as notification_repo
 from app.repositories import user_repository as user_repo
+from app.schemas.mappers import format_datetime
 from app.schemas.notifications import (
     NotificationPreferenceResponse,
     NotificationPreferenceUpdateRequest,
@@ -58,10 +59,10 @@ def to_notification_response(notification: Notification) -> NotificationResponse
         title=notification.title,
         message=notification.message,
         is_read=notification.is_read,
-        read_at=notification.read_at,
+        read_at=format_datetime(notification.read_at),
         metadata=notification.metadata_,
-        created_at=notification.created_at,
-        updated_at=notification.updated_at,
+        created_at=format_datetime(notification.created_at) or "",
+        updated_at=format_datetime(notification.updated_at) or "",
     )
 
 
@@ -76,7 +77,7 @@ def to_preference_response(
         import_completed_enabled=prefs.import_completed_enabled,
         import_failed_enabled=prefs.import_failed_enabled,
         email_enabled=prefs.email_enabled,
-        updated_at=prefs.updated_at,
+        updated_at=format_datetime(prefs.updated_at) or "",
     )
 
 
@@ -347,75 +348,85 @@ async def evaluate_budgets_after_expense(
     user_id: uuid.UUID,
     as_of_date: date,
     provider: NotificationProvider | None = None,
+    settings: Settings | None = None,
 ) -> list[Notification]:
     """Emit warning/exceeded notifications for budgets newly in those states."""
-    budgets, _ = await budget_repo.list_budgets_for_user(
-        session,
-        user_id=user_id,
-        offset=0,
-        limit=1000,
-        include_archived=False,
-    )
+    from app.core.config import get_settings
+
+    effective_settings = settings or get_settings()
+    page_size = effective_settings.api_max_page_size
+    offset = 0
     created: list[Notification] = []
-    for budget in budgets:
-        utilization = await budget_service.compute_utilization(
-            session,
-            budget=budget,
-            as_of_date=as_of_date,
-        )
-        if utilization is None:
-            continue
-        status = utilization.status
-        if status == BudgetStatus.HEALTHY:
-            continue
-
-        notification_type = (
-            NotificationType.BUDGET_EXCEEDED
-            if status == BudgetStatus.EXCEEDED
-            else NotificationType.BUDGET_WARNING
-        )
-        metadata = {
-            "budget_id": str(budget.id),
-            "period_start": utilization.period_start.isoformat(),
-            "period_end": utilization.period_end.isoformat(),
-            "status": status.value,
-        }
-        exists = await notification_repo.has_matching_notification(
+    while True:
+        budgets, total = await budget_repo.list_budgets_for_user(
             session,
             user_id=user_id,
-            notification_type=notification_type,
-            metadata_contains={
-                "budget_id": metadata["budget_id"],
-                "period_start": metadata["period_start"],
-                "status": metadata["status"],
-            },
+            offset=offset,
+            limit=page_size,
+            include_archived=False,
         )
-        if exists:
-            continue
+        for budget in budgets:
+            utilization = await budget_service.compute_utilization(
+                session,
+                budget=budget,
+                as_of_date=as_of_date,
+            )
+            if utilization is None:
+                continue
+            status = utilization.status
+            if status == BudgetStatus.HEALTHY:
+                continue
 
-        spent = utilization.spent_amount
-        limit_amount = utilization.budget_amount
-        if status == BudgetStatus.EXCEEDED:
-            title = "Budget exceeded"
-            message = (
-                f"Budget '{budget.name}' is over limit "
-                f"({spent} spent of {limit_amount})."
+            notification_type = (
+                NotificationType.BUDGET_EXCEEDED
+                if status == BudgetStatus.EXCEEDED
+                else NotificationType.BUDGET_WARNING
             )
-        else:
-            title = "Budget approaching limit"
-            message = (
-                f"Budget '{budget.name}' is approaching its limit "
-                f"({spent} spent of {limit_amount})."
+            metadata = {
+                "budget_id": str(budget.id),
+                "period_start": utilization.period_start.isoformat(),
+                "period_end": utilization.period_end.isoformat(),
+                "status": status.value,
+            }
+            exists = await notification_repo.has_matching_notification(
+                session,
+                user_id=user_id,
+                notification_type=notification_type,
+                metadata_contains={
+                    "budget_id": metadata["budget_id"],
+                    "period_start": metadata["period_start"],
+                    "status": metadata["status"],
+                },
             )
-        notification = await create_notification(
-            session,
-            user_id=user_id,
-            notification_type=notification_type,
-            title=title,
-            message=message,
-            metadata=metadata,
-            provider=provider,
-        )
-        if notification is not None:
-            created.append(notification)
+            if exists:
+                continue
+
+            spent = utilization.spent_amount
+            limit_amount = utilization.budget_amount
+            if status == BudgetStatus.EXCEEDED:
+                title = "Budget exceeded"
+                message = (
+                    f"Budget '{budget.name}' is over limit "
+                    f"({spent} spent of {limit_amount})."
+                )
+            else:
+                title = "Budget approaching limit"
+                message = (
+                    f"Budget '{budget.name}' is approaching its limit "
+                    f"({spent} spent of {limit_amount})."
+                )
+            notification = await create_notification(
+                session,
+                user_id=user_id,
+                notification_type=notification_type,
+                title=title,
+                message=message,
+                metadata=metadata,
+                provider=provider,
+            )
+            if notification is not None:
+                created.append(notification)
+        offset += page_size
+        if offset >= total:
+            break
     return created

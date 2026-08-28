@@ -125,6 +125,26 @@ def custom_openapi(application: FastAPI, settings: Settings) -> dict[str, object
         ],
     )
     schema["info"]["x-monetra-api-version"] = "v1"
+    schema.setdefault("components", {}).setdefault("securitySchemes", {})[
+        "HTTPBearer"
+    ] = {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "description": (
+            "JWT access token from /auth/login or /auth/register. "
+            "Refresh via HttpOnly cookie at /auth/refresh."
+        ),
+    }
+    for path_item in schema.get("paths", {}).values():
+        if not isinstance(path_item, dict):
+            continue
+        for operation in path_item.values():
+            if not isinstance(operation, dict):
+                continue
+            tags = operation.get("tags", [])
+            if tags and tags[0] not in {"health", "auth"}:
+                operation["security"] = [{"HTTPBearer": []}]
     application.openapi_schema = schema
     return application.openapi_schema
 

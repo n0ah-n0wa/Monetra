@@ -41,7 +41,7 @@ from app.schemas.transactions import (
     TransactionSortField,
     TransactionUpdateRequest,
 )
-from app.services import audit_service, notification_service, ownership
+from app.services import audit_service, goal_service, notification_service, ownership
 
 
 def _is_balance_affecting_update(
@@ -174,6 +174,13 @@ async def create_transaction(
             as_of_date=payload.transaction_date,
             provider=provider,
         )
+    await goal_service.sync_linked_goals_for_account(
+        session,
+        user_id=user_id,
+        account_id=account.id,
+        as_of_date=payload.transaction_date,
+        provider=provider,
+    )
     await audit_service.record_event(
         session,
         actor_id=user_id,
@@ -421,6 +428,13 @@ async def update_transaction(
             as_of_date=new_date,
             provider=provider,
         )
+    await goal_service.sync_linked_goals_for_account(
+        session,
+        user_id=user_id,
+        account_id=transaction.account_id,
+        as_of_date=new_date,
+        provider=provider,
+    )
 
     await audit_service.record_event(
         session,
@@ -488,6 +502,13 @@ async def delete_transaction(
             as_of_date=as_of,
             provider=provider,
         )
+    await goal_service.sync_linked_goals_for_account(
+        session,
+        user_id=user_id,
+        account_id=transaction.account_id,
+        as_of_date=as_of,
+        provider=provider,
+    )
     await audit_service.record_event(
         session,
         actor_id=user_id,

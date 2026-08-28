@@ -80,4 +80,19 @@ describe("getFieldErrors", () => {
     );
     expect(getFieldErrors(error).email).toBe("Email is already registered.");
   });
+
+  it("maps invalid reset token to token field", () => {
+    const error = new ApiError("Invalid reset token.", 400, {}, "INVALID_RESET_TOKEN");
+    expect(getFieldErrors(error).token).toBe("Invalid reset token.");
+  });
+
+  it("maps category name conflicts to name field", () => {
+    const error = new ApiError(
+      "Category name already exists.",
+      409,
+      {},
+      "CATEGORY_NAME_CONFLICT",
+    );
+    expect(getFieldErrors(error).name).toBe("Category name already exists.");
+  });
 });

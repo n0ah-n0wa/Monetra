@@ -1,11 +1,21 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom";
+import { ErrorState } from "@/components/states/ErrorState";
 import { LoadingState } from "@/components/states/LoadingState";
+import { Button } from "@/components/ui/Button";
 import { useAuth } from "@/features/auth/hooks";
 import { safeInternalPath } from "@/lib/navigation";
 import { routes } from "@/lib/routes";
 
 export function ProtectedRoute() {
-  const { isAuthenticated, isBootstrapping, sessionExpired } = useAuth();
+  const {
+    isAuthenticated,
+    isBootstrapping,
+    sessionExpired,
+    profileLoadError,
+    retryProfileLoad,
+    logout,
+    isLoggingOut,
+  } = useAuth();
   const location = useLocation();
 
   if (isBootstrapping) {
@@ -24,6 +34,27 @@ export function ProtectedRoute() {
           reason: sessionExpired ? "session-expired" : undefined,
         }}
       />
+    );
+  }
+
+  if (profileLoadError) {
+    return (
+      <div className="stack">
+        <ErrorState
+          error={profileLoadError}
+          title="Unable to load your profile"
+          onRetry={retryProfileLoad}
+        />
+        <div>
+          <Button
+            variant="secondary"
+            loading={isLoggingOut}
+            onClick={() => void logout()}
+          >
+            Sign out
+          </Button>
+        </div>
+      </div>
     );
   }
 

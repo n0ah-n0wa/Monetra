@@ -14,6 +14,10 @@ import {
   type BudgetUpdatePayload,
 } from "@/features/budgets/api";
 import {
+  budgetFormToCreatePayload,
+  budgetFormToUpdatePayload,
+} from "@/features/budgets/budget-form-payload";
+import {
   budgetCreateSchema,
   budgetUpdateSchema,
   type BudgetCreateFormValues,
@@ -21,33 +25,6 @@ import {
 } from "@/features/budgets/schemas";
 import { useCategoriesQuery } from "@/features/categories/hooks";
 import { applyApiErrorToForm, useZodForm } from "@/lib/form";
-
-function toCreatePayload(values: BudgetCreateFormValues): BudgetCreatePayload {
-  return {
-    name: values.name,
-    amount: values.amount,
-    currency: values.currency,
-    period: values.period,
-    scope: values.scope,
-    start_date: values.start_date,
-    end_date: values.period === "custom" ? values.end_date || null : null,
-    warning_threshold_percent: values.warning_threshold_percent,
-    category_ids: values.scope === "category" ? values.category_ids : [],
-  };
-}
-
-function toUpdatePayload(values: BudgetUpdateFormValues): BudgetUpdatePayload {
-  return {
-    name: values.name,
-    amount: values.amount,
-    period: values.period,
-    scope: values.scope,
-    start_date: values.start_date,
-    end_date: values.period === "custom" ? values.end_date || null : null,
-    warning_threshold_percent: values.warning_threshold_percent,
-    category_ids: values.scope === "category" ? values.category_ids : [],
-  };
-}
 
 type BudgetCreateFormProps = {
   defaultCurrency?: string;
@@ -96,7 +73,7 @@ export function BudgetCreateForm({
   const handleSubmit = form.handleSubmit(async (values) => {
     form.clearErrors("root");
     try {
-      await onSubmit(toCreatePayload(values));
+      await onSubmit(budgetFormToCreatePayload(values));
     } catch (error) {
       applyApiErrorToForm(error, form.setError, "Unable to create budget.");
     }
@@ -338,7 +315,7 @@ export function BudgetEditForm({
   const handleSubmit = form.handleSubmit(async (values) => {
     form.clearErrors("root");
     try {
-      await onSubmit(toUpdatePayload(values));
+      await onSubmit(budgetFormToUpdatePayload(values));
     } catch (error) {
       applyApiErrorToForm(error, form.setError, "Unable to update budget.");
     }

@@ -28,12 +28,15 @@ import {
 import { routes } from "@/lib/routes";
 import { formatMoneyDisplay } from "@/lib/money";
 import { useDebouncedValue } from "@/lib/useDebouncedValue";
+import { downloadTransactionsExport } from "@/features/exports/api";
 
 export function TransactionsPage() {
   const [filters, setFilters] = useState<TransactionFilterState>(
     defaultTransactionFilters,
   );
   const [deleting, setDeleting] = useState<Transaction | null>(null);
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
 
   const debouncedDescription = useDebouncedValue(filters.description, 300);
   const queryParams = useMemo(
@@ -58,11 +61,37 @@ export function TransactionsPage() {
         title="Transactions"
         description="Review, filter, and manage income and expenses across accounts."
         actions={
-          <Link className="btn btn--primary btn--md" to={routes.transactionNew}>
-            Add transaction
-          </Link>
+          <>
+            <Button
+              type="button"
+              variant="secondary"
+              loading={exporting}
+              onClick={() => {
+                setExportError(null);
+                setExporting(true);
+                void downloadTransactionsExport()
+                  .catch((error: unknown) => {
+                    setExportError(
+                      error instanceof Error ? error.message : "Export failed.",
+                    );
+                  })
+                  .finally(() => setExporting(false));
+              }}
+            >
+              Export CSV
+            </Button>
+            <Link className="btn btn--primary btn--md" to={routes.transactionNew}>
+              Add transaction
+            </Link>
+          </>
         }
       />
+
+      {exportError ? (
+        <Alert variant="warning" title="Export failed">
+          {exportError}
+        </Alert>
+      ) : null}
 
       <TransactionFilters
         filters={filters}

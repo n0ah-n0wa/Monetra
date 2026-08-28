@@ -139,9 +139,12 @@ async def _compute_progress(
         goal=goal,
         as_of_date=as_of_date,
     )
+    current_amount = goal.current_amount
+    if goal.linked_account_id is not None and history:
+        current_amount = history[-1].cumulative_amount
     metrics = compute_goal_progress(
         target_amount=goal.target_amount,
-        current_amount=goal.current_amount,
+        current_amount=current_amount,
         target_date=goal.target_date,
         as_of_date=as_of_date,
         contribution_history=history,
@@ -371,3 +374,51 @@ def build_goal_response(
     progress: GoalProgressResponse | None = None,
 ) -> GoalResponse:
     return _to_goal_response(goal, progress=progress)
+
+
+async def sync_linked_goals_for_account(
+    session: AsyncSession,
+    *,
+    user_id: uuid.UUID,
+    account_id: uuid.UUID,
+    as_of_date: date,
+    provider: NotificationProvider | None = None,
+) -> None:
+    """Update linked-goal balances from account activity and emit milestones."""
+    goals = await goal_repo.list_active_goals_linked_to_account(
+        session,
+        user_id=user_id,
+        account_id=account_id,
+    )
+    for goal in goals:
+        previous_current = goal.current_amount
+        previous_target = goal.target_amount
+        history = await _build_contribution_history(
+            session,
+            goal=goal,
+            as_of_date=as_of_date,
+        )
+        if not history:
+            continue
+        new_current = normalize_money(history[-1].cumulative_amount)
+        if new_current < Decimal("0"):
+            new_current = Decimal("0.0000")
+        if new_current == previous_current:
+            continue
+        goal.current_amount = new_current
+        if goal.status != GoalStatus.ARCHIVED:
+            goal.status = _goal_status_for_amounts(
+                target_amount=goal.target_amount,
+                current_amount=new_current,
+            )
+        await notification_service.notify_goal_milestones(
+            session,
+            user_id=user_id,
+            goal_id=goal.id,
+            goal_name=goal.name,
+            previous_current=previous_current,
+            previous_target=previous_target,
+            current_amount=new_current,
+            target_amount=goal.target_amount,
+            provider=provider,
+        )

@@ -105,6 +105,30 @@ export function getFieldErrors(error: unknown): Record<string, string> {
     fieldErrors.root = error.message;
   }
 
+  if (error.code === "INVALID_RESET_TOKEN") {
+    fieldErrors.token = error.message;
+  }
+
+  if (error.code === "CATEGORY_NAME_CONFLICT") {
+    fieldErrors.name = error.message;
+  }
+
+  if (error.code === "CATEGORY_TYPE_MISMATCH") {
+    fieldErrors.category_id = error.message;
+  }
+
+  if (error.code === "ACCOUNT_ARCHIVED" || error.code === "ACCOUNT_NOT_FOUND") {
+    fieldErrors.account_id = error.message;
+  }
+
+  if (error.code === "CATEGORY_ARCHIVED" || error.code === "CATEGORY_NOT_FOUND") {
+    fieldErrors.category_id = error.message;
+  }
+
+  if (error.code === "BUDGET_ARCHIVED" || error.code === "BUDGET_NOT_FOUND") {
+    fieldErrors.root = error.message;
+  }
+
   const rawErrors = details.errors;
   if (Array.isArray(rawErrors)) {
     for (const issue of rawErrors) {

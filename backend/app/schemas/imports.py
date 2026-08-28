@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from datetime import datetime
-
 from pydantic import BaseModel, Field
 
 from app.models.enums import ImportJobStatus
@@ -48,9 +46,9 @@ class ImportJobResponse(BaseModel):
     stats: ImportJobStats
     preview_rows: list[ImportPreviewRowResponse] = Field(default_factory=list)
     errors: list[ImportRowErrorResponse] = Field(default_factory=list)
-    completed_at: datetime | None = None
-    created_at: datetime
-    updated_at: datetime
+    completed_at: str | None = None
+    created_at: str
+    updated_at: str
 
 
 class ImportConfirmRequest(BaseModel):

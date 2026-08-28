@@ -91,6 +91,22 @@ async def list_goals_for_user(
     return list(result.scalars().all()), int(total or 0)
 
 
+async def list_active_goals_linked_to_account(
+    session: AsyncSession,
+    *,
+    user_id: uuid.UUID,
+    account_id: uuid.UUID,
+) -> list[FinancialGoal]:
+    result = await session.execute(
+        select(FinancialGoal).where(
+            FinancialGoal.user_id == user_id,
+            FinancialGoal.linked_account_id == account_id,
+            FinancialGoal.archived_at.is_(None),
+        ),
+    )
+    return list(result.scalars().all())
+
+
 async def archive_goal(session: AsyncSession, goal: FinancialGoal) -> None:
     goal.status = GoalStatus.ARCHIVED
     goal.archived_at = datetime.now(UTC)

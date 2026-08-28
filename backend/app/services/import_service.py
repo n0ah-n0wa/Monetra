@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import uuid
-from datetime import date
+from datetime import UTC, date, datetime
 from decimal import Decimal
 from typing import Any
 
@@ -45,12 +45,13 @@ from app.schemas.imports import (
     ImportPreviewRowResponse,
     ImportRowErrorResponse,
 )
+from app.schemas.mappers import format_datetime
 from app.schemas.pagination import (
     PaginatedResponse,
     build_paginated_response,
     pagination_params,
 )
-from app.services import audit_service, notification_service, ownership
+from app.services import audit_service, goal_service, notification_service, ownership
 
 _ALLOWED_CONTENT_TYPES = {
     "text/csv",
@@ -104,9 +105,9 @@ def build_import_job_response(
         stats=_stats_from_job(job),
         preview_rows=preview_rows,
         errors=errors,
-        completed_at=job.completed_at,
-        created_at=job.created_at,
-        updated_at=job.updated_at,
+        completed_at=format_datetime(job.completed_at),
+        created_at=format_datetime(job.created_at) or "",
+        updated_at=format_datetime(job.updated_at) or "",
     )
 
 
@@ -570,18 +571,20 @@ async def confirm_import(
                     seen_in_batch_fps.add(fp)
 
             is_duplicate = preview_duplicate or live_duplicate or batch_duplicate
-            if is_duplicate and skip_duplicates:
-                skipped.append(row)
-                continue
-            if live_duplicate and external_reference and not skip_duplicates:
-                # Unique index cannot accept a colliding external_reference.
+            if is_duplicate:
+                if skip_duplicates:
+                    skipped.append(row)
+                    continue
                 raise ConflictError(
-                    code="IMPORT_DUPLICATE_EXTERNAL_REFERENCE",
+                    code="IMPORT_DUPLICATE_ROW",
                     message=(
-                        "Cannot import row with an external_reference that "
-                        "already exists on this account."
+                        "Cannot import rows that duplicate existing transactions "
+                        "when skip_duplicates is false."
                     ),
-                    details={"external_reference": str(external_reference)},
+                    details={
+                        "transaction_date": str(row.get("transaction_date")),
+                        "description": str(row.get("description")),
+                    },
                 )
 
             category_id = uuid.UUID(str(row["category_id"]))
@@ -600,9 +603,15 @@ async def confirm_import(
             importable.append(row)
 
         imported = 0
+        expense_dates: set[date] = set()
+        imported_dates: set[date] = set()
         for row in importable:
             amount = Decimal(str(row["amount"]))
             transaction_type = TransactionType(str(row["transaction_type"]))
+            row_date = date.fromisoformat(str(row["transaction_date"]))
+            imported_dates.add(row_date)
+            if transaction_type == TransactionType.EXPENSE:
+                expense_dates.add(row_date)
             delta = signed_transaction_amount(transaction_type, amount)
             locked_account.current_balance = apply_balance_delta(
                 locked_account.current_balance,
@@ -617,12 +626,29 @@ async def confirm_import(
                 amount=amount,
                 currency=locked_account.currency,
                 description=str(row["description"]),
-                transaction_date=date.fromisoformat(str(row["transaction_date"])),
+                transaction_date=row_date,
                 notes=row.get("notes"),
                 import_job_id=job.id,
                 external_reference=row.get("external_reference"),
             )
             imported += 1
+
+        for expense_date in expense_dates:
+            await notification_service.evaluate_budgets_after_expense(
+                session,
+                user_id=user_id,
+                as_of_date=expense_date,
+                provider=provider,
+            )
+
+        sync_date = max(imported_dates) if imported_dates else datetime.now(UTC).date()
+        await goal_service.sync_linked_goals_for_account(
+            session,
+            user_id=user_id,
+            account_id=locked_account.id,
+            as_of_date=sync_date,
+            provider=provider,
+        )
 
         job.imported_rows = imported
         job.skipped_rows = len(skipped)

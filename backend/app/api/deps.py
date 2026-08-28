@@ -10,7 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import Settings, get_settings
 from app.core.csrf import validate_cookie_auth_origin
-from app.core.exceptions import RateLimitError, UnauthorizedError
+from app.core.exceptions import ForbiddenError, RateLimitError, UnauthorizedError
 from app.core.rate_limit import get_rate_limiter
 from app.core.security import assert_access_token_active_for_user, decode_access_token
 from app.db.session import get_db
@@ -48,6 +48,15 @@ async def enforce_auth_rate_limit(request: Request, settings: SettingsDep) -> No
 
 async def enforce_cookie_auth_origin(request: Request, settings: SettingsDep) -> None:
     validate_cookie_auth_origin(request, settings)
+
+
+def enforce_exchange_rate_write_access(settings: SettingsDep) -> None:
+    """Exchange rates are global; only automated tests may seed them via the API."""
+    if not settings.is_test:
+        raise ForbiddenError(
+            code="FORBIDDEN",
+            message="Exchange rate writes are restricted to system processes.",
+        )
 
 
 async def get_current_user(
@@ -111,6 +120,7 @@ __all__ = [
     "SettingsDep",
     "enforce_auth_rate_limit",
     "enforce_cookie_auth_origin",
+    "enforce_exchange_rate_write_access",
     "get_app_notification_provider",
     "get_app_settings",
     "get_current_user",

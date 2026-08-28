@@ -45,15 +45,7 @@ export async function fetchCategories(
   params: CategoryListParams = {},
 ): Promise<PaginatedResponse<Category>> {
   return apiClient.get<PaginatedResponse<Category>>(
-    `/categories${toSearchParams({
-      ...params,
-      include_system:
-        params.include_system === undefined
-          ? undefined
-          : params.include_system
-            ? "true"
-            : "false",
-    })}`,
+    `/categories${toSearchParams(params)}`,
   );
 }
 

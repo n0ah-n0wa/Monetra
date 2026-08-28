@@ -24,6 +24,8 @@ export type AuthContextValue = {
   user: User | null;
   isAuthenticated: boolean;
   isBootstrapping: boolean;
+  profileLoadError: unknown | null;
+  retryProfileLoad: () => void;
   sessionExpired: boolean;
   clearSessionExpired: () => void;
   login: (values: LoginFormValues) => Promise<void>;
@@ -163,12 +165,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [clearSession, hasToken, userQuery.error, userQuery.isError]);
 
+  const profileLoadError =
+    hasToken && userQuery.isError && !isAuthFailureError(userQuery.error)
+      ? userQuery.error
+      : null;
+
   const value = useMemo<AuthContextValue>(
     () => ({
       user: userQuery.data ?? null,
       isAuthenticated: hasToken,
       isBootstrapping:
         !bootstrapped || (hasToken && userQuery.isPending && !userQuery.isError),
+      profileLoadError,
+      retryProfileLoad: () => {
+        void userQuery.refetch();
+      },
       sessionExpired,
       clearSessionExpired: () => setSessionExpired(false),
       login: async (values) => {
@@ -189,11 +200,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       hasToken,
       loginMutation,
       logoutMutation,
+      profileLoadError,
       registerMutation,
       sessionExpired,
-      userQuery.data,
-      userQuery.isError,
-      userQuery.isPending,
+      userQuery,
     ],
   );
 
