@@ -12,9 +12,14 @@ from app.api.errors import register_exception_handlers
 from app.api.v1.health import router as health_router
 from app.api.v1.router import api_router
 from app.core.config import Settings, get_settings
-from app.core.logging import configure_logging, get_logger
-from app.core.middleware import RequestIdMiddleware, SecurityHeadersMiddleware
+from app.core.logging import configure_logging, get_logger, log_event
+from app.core.middleware import (
+    AccessLogMiddleware,
+    RequestIdMiddleware,
+    SecurityHeadersMiddleware,
+)
 from app.core.rate_limit import InMemoryRateLimiter
+from app.core.telemetry import init_observability, shutdown_observability
 from app.db.session import dispose_db, init_db
 from app.services.exchange_rate_providers import create_exchange_rate_provider
 from app.services.notification_providers import create_notification_provider
@@ -27,22 +32,31 @@ def create_lifespan(
 ) -> Callable[[FastAPI], AbstractAsyncContextManager[None]]:
     @asynccontextmanager
     async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
-        configure_logging(level=settings.log_level)
+        configure_logging(
+            level=settings.log_level,
+            log_format=settings.log_format,
+            service_name=settings.service_name,
+        )
         # Drop any import-time / previous engine before binding this app's settings.
         await dispose_db()
         init_db(settings)
         _app.state.rate_limiter = InMemoryRateLimiter()
         _app.state.notification_provider = create_notification_provider(settings)
         _app.state.exchange_rate_provider = create_exchange_rate_provider(settings)
-        logger.info(
-            "event=startup app=%s version=%s env=%s",
-            settings.app_name,
-            __version__,
-            settings.app_env,
+        telemetry = init_observability(settings)
+        log_event(
+            logger,
+            "startup",
+            app=settings.app_name,
+            version=__version__,
+            env=settings.app_env,
+            log_format=settings.log_format,
+            **telemetry,
         )
         yield
         await dispose_db()
-        logger.info("event=shutdown app=%s", settings.app_name)
+        shutdown_observability()
+        log_event(logger, "shutdown", app=settings.app_name)
 
     return lifespan
 
@@ -152,7 +166,11 @@ def custom_openapi(application: FastAPI, settings: Settings) -> dict[str, object
 def create_app(settings: Settings | None = None) -> FastAPI:
     """Build and configure the FastAPI application."""
     cfg = settings or get_settings()
-    configure_logging(level=cfg.log_level)
+    configure_logging(
+        level=cfg.log_level,
+        log_format=cfg.log_format,
+        service_name=cfg.service_name,
+    )
 
     application = FastAPI(
         title=cfg.app_name,
@@ -169,6 +187,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     # Last added = outermost. Request ID should wrap responses from inner layers.
     application.add_middleware(SecurityHeadersMiddleware, settings=cfg)
     application.add_middleware(RequestIdMiddleware)
+    application.add_middleware(AccessLogMiddleware, settings=cfg)
     application.add_middleware(
         CORSMiddleware,
         allow_origins=cfg.cors_origins,

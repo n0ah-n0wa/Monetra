@@ -28,6 +28,15 @@ class Settings(BaseSettings):
     debug: bool = False
     api_v1_prefix: str = "/api/v1"
     log_level: str = "INFO"
+    log_format: Literal["text", "json"] = "text"
+    service_name: str = "monetra-backend"
+    access_log_enabled: bool = True
+    access_log_skip_paths: Annotated[list[str], NoDecode] = Field(
+        default_factory=lambda: ["/health"],
+    )
+    otel_enabled: bool = False
+    otel_exporter: str = "otlp"
+    sentry_dsn: str = ""
     api_description: str = (
         "Monetra personal finance platform API. "
         "Monetary values use exact decimal arithmetic."
@@ -88,6 +97,13 @@ class Settings(BaseSettings):
             return [item.strip() for item in value.split(",") if item.strip()]
         return value
 
+    @field_validator("access_log_skip_paths", mode="before")
+    @classmethod
+    def parse_access_log_skip_paths(cls, value: object) -> object:
+        if isinstance(value, str):
+            return [item.strip() for item in value.split(",") if item.strip()]
+        return value
+
     @model_validator(mode="after")
     def validate_environment(self) -> Self:
         if self.app_env == "production":
@@ -103,6 +119,8 @@ class Settings(BaseSettings):
             object.__setattr__(self, "refresh_token_cookie_secure", True)
             if self.trusted_proxy_count < 1:
                 object.__setattr__(self, "trusted_proxy_count", 1)
+            if self.log_format == "text":
+                object.__setattr__(self, "log_format", "json")
         return self
 
     @property

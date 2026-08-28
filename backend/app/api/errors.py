@@ -1,5 +1,8 @@
 """Centralized FastAPI exception handlers."""
 
+from __future__ import annotations
+
+import logging
 from typing import Any, cast
 
 from fastapi import FastAPI, Request, status
@@ -9,7 +12,8 @@ from fastapi.responses import JSONResponse
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from app.core.exceptions import AppError
-from app.core.logging import get_logger
+from app.core.logging import get_logger, log_event
+from app.core.redaction import redact_mapping
 from app.core.request_context import get_request_id
 from app.schemas.errors import ErrorBody, ErrorResponse
 
@@ -41,8 +45,25 @@ def _error_response(
     )
 
 
+def _request_context(request: Request) -> dict[str, Any]:
+    return {
+        "method": request.method,
+        "path": request.url.path,
+    }
+
+
 async def app_error_handler(request: Request, exc: Exception) -> JSONResponse:
     error = cast(AppError, exc)
+    level = logging.ERROR if error.status_code >= 500 else logging.WARNING
+    log_event(
+        logger,
+        "app.error",
+        level=level,
+        code=error.code,
+        status_code=error.status_code,
+        details=redact_mapping(error.details),
+        **_request_context(request),
+    )
     return _error_response(
         request=request,
         status_code=error.status_code,
@@ -69,6 +90,16 @@ async def http_exception_handler(request: Request, exc: Exception) -> JSONRespon
         code = "HTTP_ERROR"
         message = "Request failed."
         details = {"detail": detail}
+
+    if http_exc.status_code >= 500:
+        log_event(
+            logger,
+            "http.error",
+            level=logging.ERROR,
+            code=code,
+            status_code=http_exc.status_code,
+            **_request_context(request),
+        )
 
     return _error_response(
         request=request,
@@ -98,9 +129,13 @@ async def unhandled_exception_handler(
     exc: Exception,
 ) -> JSONResponse:
     request_id = _resolve_request_id(request)
-    logger.exception(
-        "Unhandled exception request_id=%s",
-        request_id,
+    log_event(
+        logger,
+        "app.unhandled_error",
+        level=logging.ERROR,
+        request_id=request_id,
+        error_type=type(exc).__name__,
+        **_request_context(request),
         exc_info=exc,
     )
     return _error_response(

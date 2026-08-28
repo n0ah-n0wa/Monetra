@@ -58,6 +58,7 @@ def test_production_disables_docs() -> None:
     assert settings.docs_url is None
     assert settings.redoc_url is None
     assert settings.openapi_url is None
+    assert settings.log_format == "json"
 
 
 def test_cors_origins_parse_csv() -> None:

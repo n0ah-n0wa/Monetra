@@ -4,15 +4,20 @@ Implemented as pure ASGI middleware so FastAPI exception handlers remain
 effective (BaseHTTPMiddleware can re-raise and bypass handlers).
 """
 
+from __future__ import annotations
+
+import time
 import uuid
 
 from starlette.datastructures import MutableHeaders
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
 from app.core.config import Settings
+from app.core.logging import get_logger, log_event
 from app.core.request_context import reset_request_id, set_request_id
 
 REQUEST_ID_HEADER = "X-Request-ID"
+logger = get_logger(__name__)
 
 
 class RequestIdMiddleware:
@@ -49,6 +54,57 @@ class RequestIdMiddleware:
             await self.app(scope, receive, send_wrapper)
         finally:
             reset_request_id(token)
+
+
+class AccessLogMiddleware:
+    """Emit structured HTTP access logs with latency and status."""
+
+    def __init__(
+        self,
+        app: ASGIApp,
+        *,
+        settings: Settings | None = None,
+    ) -> None:
+        self.app = app
+        self._settings = settings
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+
+        settings = self._settings
+        if settings is not None and not settings.access_log_enabled:
+            await self.app(scope, receive, send)
+            return
+
+        path = scope.get("path", "")
+        if settings is not None and path in settings.access_log_skip_paths:
+            await self.app(scope, receive, send)
+            return
+
+        method = scope.get("method", "GET")
+        started = time.perf_counter()
+        status_code = 500
+
+        async def send_wrapper(message: Message) -> None:
+            nonlocal status_code
+            if message["type"] == "http.response.start":
+                status_code = message["status"]
+            await send(message)
+
+        try:
+            await self.app(scope, receive, send_wrapper)
+        finally:
+            duration_ms = round((time.perf_counter() - started) * 1000, 2)
+            log_event(
+                logger,
+                "http.request.completed",
+                method=method,
+                path=path,
+                status_code=status_code,
+                duration_ms=duration_ms,
+            )
 
 
 class SecurityHeadersMiddleware:

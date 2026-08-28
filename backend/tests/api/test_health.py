@@ -1,5 +1,8 @@
 """Health and readiness endpoint tests."""
 
+from unittest.mock import AsyncMock, patch
+
+from app.db.session import DatabaseConnectivityResult
 from httpx import AsyncClient
 
 
@@ -23,8 +26,60 @@ async def test_ready_when_database_available(client: AsyncClient) -> None:
     payload = response.json()
     assert "status" in payload
     assert "database" in payload
+    assert "checks" in payload
     assert isinstance(payload["database"], bool)
+    assert payload["checks"]["database"]["status"] in {"ok", "unavailable"}
     if response.status_code == 200:
-        assert payload == {"status": "ready", "database": True}
+        assert payload["status"] == "ready"
+        assert payload["database"] is True
+        assert payload["checks"]["database"]["status"] == "ok"
+        assert payload["checks"]["database"]["latency_ms"] is not None
     else:
-        assert payload == {"status": "unavailable", "database": False}
+        assert payload["status"] == "unavailable"
+        assert payload["database"] is False
+        assert payload["checks"]["database"]["status"] == "unavailable"
+
+
+async def test_ready_returns_503_when_database_unavailable(
+    client: AsyncClient,
+) -> None:
+    unavailable = DatabaseConnectivityResult(
+        ok=False,
+        latency_ms=12.5,
+        error="database_connection_failed",
+    )
+    with patch(
+        "app.api.v1.health.check_database_connectivity",
+        new=AsyncMock(return_value=unavailable),
+    ):
+        response = await client.get("/ready")
+
+    assert response.status_code == 503
+    payload = response.json()
+    assert payload == {
+        "status": "unavailable",
+        "database": False,
+        "checks": {
+            "database": {
+                "status": "unavailable",
+                "latency_ms": 12.5,
+                "error": "database_connection_failed",
+            },
+        },
+    }
+
+
+async def test_ready_includes_database_latency_when_available(
+    client: AsyncClient,
+) -> None:
+    available = DatabaseConnectivityResult(ok=True, latency_ms=3.21)
+    with patch(
+        "app.api.v1.health.check_database_connectivity",
+        new=AsyncMock(return_value=available),
+    ):
+        response = await client.get("/ready")
+
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["checks"]["database"]["latency_ms"] == 3.21
+    assert payload["checks"]["database"]["error"] is None

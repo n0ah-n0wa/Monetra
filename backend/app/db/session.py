@@ -1,6 +1,10 @@
 """Async SQLAlchemy engine and session management."""
 
+from __future__ import annotations
+
 from collections.abc import AsyncGenerator
+from dataclasses import dataclass
+from time import perf_counter
 
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import (
@@ -97,10 +101,45 @@ async def get_db() -> AsyncGenerator[AsyncSession]:
 
 async def ping_database(engine: AsyncEngine | None = None) -> bool:
     """Return True when PostgreSQL accepts a simple query."""
+    result = await check_database_connectivity(engine=engine)
+    return result.ok
+
+
+@dataclass(frozen=True, slots=True)
+class DatabaseConnectivityResult:
+    """Safe database connectivity diagnostics for readiness probes."""
+
+    ok: bool
+    latency_ms: float | None
+    error: str | None = None
+
+
+def _safe_database_error(exc: Exception) -> str:
+    """Map exceptions to operator-safe error categories."""
+    name = type(exc).__name__
+    message = str(exc).lower()
+    if "operationalerror" in name.lower() or "connection" in message:
+        return "database_connection_failed"
+    if "timeout" in message:
+        return "database_timeout"
+    return "database_check_failed"
+
+
+async def check_database_connectivity(
+    engine: AsyncEngine | None = None,
+) -> DatabaseConnectivityResult:
+    """Run a lightweight PostgreSQL connectivity check with timing."""
     target = engine or get_engine()
+    started = perf_counter()
     try:
         async with target.connect() as connection:
             await connection.execute(text("SELECT 1"))
-        return True
-    except Exception:
-        return False
+    except Exception as exc:
+        elapsed_ms = round((perf_counter() - started) * 1000, 2)
+        return DatabaseConnectivityResult(
+            ok=False,
+            latency_ms=elapsed_ms,
+            error=_safe_database_error(exc),
+        )
+    elapsed_ms = round((perf_counter() - started) * 1000, 2)
+    return DatabaseConnectivityResult(ok=True, latency_ms=elapsed_ms)

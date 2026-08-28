@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import uuid
 from datetime import date
 from decimal import Decimal
@@ -11,6 +12,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import Settings
 from app.core.exceptions import NotFoundError, ValidationAppError
+from app.core.logging import get_logger, log_event
 from app.domain.notification_events import (
     completion_percentage,
     crossed_goal_milestones,
@@ -34,6 +36,8 @@ from app.schemas.pagination import (
     pagination_params,
 )
 from app.services import budget_service
+
+logger = get_logger(__name__)
 
 
 def _preference_enabled(
@@ -118,15 +122,24 @@ async def create_notification(
     if prefs.email_enabled and provider is not None:
         user = await user_repo.get_user_by_id(session, user_id)
         if user is not None:
-            await provider.send_app_notification(
-                AppNotificationMessage(
-                    to_email=user.email,
-                    notification_type=notification_type,
-                    title=title,
-                    message=message,
-                    metadata=metadata,
-                ),
-            )
+            try:
+                await provider.send_app_notification(
+                    AppNotificationMessage(
+                        to_email=user.email,
+                        notification_type=notification_type,
+                        title=title,
+                        message=message,
+                        metadata=metadata,
+                    ),
+                )
+            except Exception:
+                log_event(
+                    logger,
+                    "notification.delivery_failed",
+                    level=logging.ERROR,
+                    user_id=str(user_id),
+                    notification_type=notification_type.value,
+                )
     return notification
 
 

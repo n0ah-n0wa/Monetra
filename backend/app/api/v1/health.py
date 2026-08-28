@@ -1,12 +1,16 @@
 """Health and readiness endpoints required by the specification."""
 
+import logging
+
 from fastapi import APIRouter, Response, status
 
-from app.db.session import ping_database
+from app.core.logging import get_logger, log_event
+from app.db.session import check_database_connectivity
 from app.schemas.errors import ErrorResponse
-from app.schemas.health import HealthResponse, ReadyResponse
+from app.schemas.health import DependencyCheck, HealthResponse, ReadyResponse
 
 router = APIRouter(tags=["health"])
+logger = get_logger(__name__)
 
 
 @router.get(
@@ -41,8 +45,31 @@ async def health() -> HealthResponse:
 )
 async def ready(response: Response) -> ReadyResponse:
     """Verify that required dependencies such as PostgreSQL are available."""
-    database_ok = await ping_database()
-    if not database_ok:
-        response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
-        return ReadyResponse(status="unavailable", database=False)
-    return ReadyResponse(status="ready", database=True)
+    database_result = await check_database_connectivity()
+    database_check = DependencyCheck(
+        status="ok" if database_result.ok else "unavailable",
+        latency_ms=database_result.latency_ms,
+        error=database_result.error,
+    )
+    checks = {"database": database_check}
+    database_ok = database_result.ok
+
+    if database_ok:
+        log_event(
+            logger,
+            "readiness.checked",
+            status="ready",
+            database_latency_ms=database_result.latency_ms,
+        )
+        return ReadyResponse(status="ready", database=True, checks=checks)
+
+    log_event(
+        logger,
+        "readiness.checked",
+        level=logging.ERROR,
+        status="unavailable",
+        database_error=database_result.error,
+        database_latency_ms=database_result.latency_ms,
+    )
+    response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
+    return ReadyResponse(status="unavailable", database=False, checks=checks)
