@@ -15,6 +15,7 @@ from sqlalchemy import (
     ForeignKeyConstraint,
     Index,
     String,
+    text,
 )
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -45,6 +46,11 @@ class FinancialGoal(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         ),
         Index("ix_financial_goals_user_id", "user_id"),
         Index("ix_financial_goals_user_id_status", "user_id", "status"),
+        Index(
+            "ix_financial_goals_linked_account_id",
+            "linked_account_id",
+            postgresql_where=text("archived_at IS NULL"),
+        ),
     )
 
     user_id: Mapped[uuid.UUID] = mapped_column(

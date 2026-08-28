@@ -16,7 +16,8 @@ param(
     "test",
     "build",
     "docker-build",
-    "verify"
+    "verify",
+    "loadtest"
   )]
   [string]$Command = "help"
 )
@@ -55,6 +56,7 @@ Monetra development commands
   .\scripts\dev.ps1 build         Build frontend
   .\scripts\dev.ps1 docker-build  Build Docker images
   .\scripts\dev.ps1 verify        Full quality gate
+  .\scripts\dev.ps1 loadtest      Run API load tests (local stack)
 "@
   }
   "install" {
@@ -105,5 +107,10 @@ Monetra development commands
     & $PSCommandPath build
     & $PSCommandPath docker-build
     Write-Host "Verification complete."
+  }
+  "loadtest" {
+    Invoke-InDirectory (Join-Path $Root "backend") {
+      python -m loadtest --quick-seed @args
+    }
   }
 }

@@ -73,6 +73,13 @@ class Transaction(UUIDPrimaryKeyMixin, TimestampMixin, Base):
             postgresql_where=text("deleted_at IS NULL"),
         ),
         Index(
+            "ix_transactions_user_account_date_active",
+            "user_id",
+            "account_id",
+            "transaction_date",
+            postgresql_where=text("deleted_at IS NULL"),
+        ),
+        Index(
             "uq_transactions_import_external_reference",
             "user_id",
             "account_id",

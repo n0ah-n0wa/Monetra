@@ -38,7 +38,7 @@ packages = ["app"]
 [tool.ruff]
 target-version = "py313"
 line-length = 88
-src = ["app", "tests"]
+src = ["app", "tests", "loadtest"]
 
 [tool.ruff.lint]
 select = [
@@ -59,6 +59,7 @@ ignore = [
 
 [tool.ruff.lint.per-file-ignores]
 "tests/**/*.py" = ["S"]
+"loadtest/**/*.py" = ["S"]
 
 [tool.ruff.format]
 quote-style = "double"

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import uuid
+from calendar import monthrange
 from datetime import UTC, date, datetime
 from decimal import Decimal
 from typing import Any
@@ -28,6 +29,7 @@ from app.domain.transactions import (
     normalize_money,
     signed_transaction_amount,
 )
+from app.models.category import Category
 from app.models.enums import (
     AccountStatus,
     AuditAction,
@@ -181,17 +183,28 @@ def _validate_upload(
         ) from exc
 
 
+def _budget_evaluation_dates(expense_dates: set[date]) -> list[date]:
+    """Collapse expense dates to month-end checkpoints for budget scans."""
+    return sorted(
+        {date(d.year, d.month, monthrange(d.year, d.month)[1]) for d in expense_dates},
+    )
+
+
 async def _resolve_category_id(
     session: AsyncSession,
     *,
     user_id: uuid.UUID,
     row: ParsedImportRow,
+    category_lookup: dict[str, Category] | None = None,
 ) -> uuid.UUID:
-    category = await category_repo.find_active_category_by_name(
-        session,
-        user_id=user_id,
-        name=row.category_name,
-    )
+    if category_lookup is not None:
+        category = category_lookup.get(row.category_name.strip().lower())
+    else:
+        category = await category_repo.find_active_category_by_name(
+            session,
+            user_id=user_id,
+            name=row.category_name,
+        )
     if category is None:
         raise ValidationAppError(
             code="CATEGORY_NOT_FOUND",
@@ -263,6 +276,11 @@ async def upload_and_preview(
         candidates=fingerprint_candidates,
     )
 
+    category_lookup = await category_repo.build_active_category_lookup_by_name(
+        session,
+        user_id=user_id,
+    )
+
     preview_rows: list[dict[str, Any]] = []
     row_errors = [error.to_dict() for error in parsed.errors]
     duplicate_count = 0
@@ -294,6 +312,7 @@ async def upload_and_preview(
                 session,
                 user_id=user_id,
                 row=row,
+                category_lookup=category_lookup,
             )
             category_id = str(resolved)
         except ValidationAppError as exc:
@@ -633,11 +652,11 @@ async def confirm_import(
             )
             imported += 1
 
-        for expense_date in expense_dates:
+        for evaluation_date in _budget_evaluation_dates(expense_dates):
             await notification_service.evaluate_budgets_after_expense(
                 session,
                 user_id=user_id,
-                as_of_date=expense_date,
+                as_of_date=evaluation_date,
                 provider=provider,
             )
 

@@ -16,26 +16,32 @@ import {
 } from "@/features/analytics/filter-state";
 import { analyticsFiltersSchema } from "@/features/analytics/schemas";
 import { useAuth } from "@/features/auth/hooks";
+import { useDebouncedValue } from "@/lib/useDebouncedValue";
 
 export function AnalyticsPage() {
   const { user } = useAuth();
   const [filters, setFilters] = useState(() =>
     defaultAnalyticsFilters(user?.reporting_currency ?? "USD"),
   );
+  const debouncedCurrency = useDebouncedValue(filters.reporting_currency, 300);
+  const queryFilters = useMemo(
+    () => ({ ...filters, reporting_currency: debouncedCurrency }),
+    [filters, debouncedCurrency],
+  );
 
-  const validation = analyticsFiltersSchema.safeParse(filters);
+  const validation = analyticsFiltersSchema.safeParse(queryFilters);
   const queriesEnabled = validation.success;
 
-  const params = useMemo(() => filtersToAnalyticsParams(filters), [filters]);
+  const params = useMemo(() => filtersToAnalyticsParams(queryFilters), [queryFilters]);
 
   const periodSummary = validation.success
-    ? filters.period === "custom"
+    ? queryFilters.period === "custom"
       ? formatResolvedPeriod(
-          filters.date_from,
-          filters.date_to,
-          filters.reporting_currency || user?.reporting_currency || "USD",
+          queryFilters.date_from,
+          queryFilters.date_to,
+          queryFilters.reporting_currency || user?.reporting_currency || "USD",
         )
-      : `Preset: ${filters.period.replaceAll("_", " ")} · ${filters.reporting_currency || user?.reporting_currency || "USD"}`
+      : `Preset: ${queryFilters.period.replaceAll("_", " ")} · ${queryFilters.reporting_currency || user?.reporting_currency || "USD"}`
     : null;
 
   return (

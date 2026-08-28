@@ -16,11 +16,14 @@ import {
 } from "@/features/accounts/api";
 import { queryKeys } from "@/lib/query-client";
 
+const REFERENCE_DATA_STALE_MS = 5 * 60_000;
+
 export function useAccountsQuery(params: AccountListParams = { status: "active" }) {
   return useQuery({
     queryKey: queryKeys.accounts.list(params),
     queryFn: () => fetchAccounts(params),
     placeholderData: keepPreviousData,
+    staleTime: REFERENCE_DATA_STALE_MS,
   });
 }
 

@@ -170,40 +170,55 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       ? userQuery.error
       : null;
 
+  const {
+    data: user,
+    isPending: isUserPending,
+    isError: isUserError,
+    refetch: refetchUser,
+  } = userQuery;
+  const { mutateAsync: loginAsync, isPending: isLoggingIn } = loginMutation;
+  const { mutateAsync: registerAsync, isPending: isRegistering } = registerMutation;
+  const { mutateAsync: logoutAsync, isPending: isLoggingOut } = logoutMutation;
+
   const value = useMemo<AuthContextValue>(
     () => ({
-      user: userQuery.data ?? null,
+      user: user ?? null,
       isAuthenticated: hasToken,
-      isBootstrapping:
-        !bootstrapped || (hasToken && userQuery.isPending && !userQuery.isError),
+      isBootstrapping: !bootstrapped || (hasToken && isUserPending && !isUserError),
       profileLoadError,
       retryProfileLoad: () => {
-        void userQuery.refetch();
+        void refetchUser();
       },
       sessionExpired,
       clearSessionExpired: () => setSessionExpired(false),
       login: async (values) => {
-        await loginMutation.mutateAsync(values);
+        await loginAsync(values);
       },
       register: async (values) => {
-        await registerMutation.mutateAsync(values);
+        await registerAsync(values);
       },
       logout: async () => {
-        await logoutMutation.mutateAsync();
+        await logoutAsync();
       },
-      isLoggingIn: loginMutation.isPending,
-      isRegistering: registerMutation.isPending,
-      isLoggingOut: logoutMutation.isPending,
+      isLoggingIn,
+      isRegistering,
+      isLoggingOut,
     }),
     [
       bootstrapped,
       hasToken,
-      loginMutation,
-      logoutMutation,
+      isLoggingIn,
+      isLoggingOut,
+      isRegistering,
+      isUserError,
+      isUserPending,
+      loginAsync,
+      logoutAsync,
       profileLoadError,
-      registerMutation,
+      refetchUser,
+      registerAsync,
       sessionExpired,
-      userQuery,
+      user,
     ],
   );
 

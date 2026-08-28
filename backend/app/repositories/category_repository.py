@@ -70,6 +70,24 @@ async def list_categories_for_user(
     return list(result.scalars().all()), int(total or 0)
 
 
+async def build_active_category_lookup_by_name(
+    session: AsyncSession,
+    *,
+    user_id: uuid.UUID,
+) -> dict[str, Category]:
+    """Load active user and system categories keyed by lowercased name."""
+    result = await session.execute(
+        select(Category).where(
+            or_(Category.user_id == user_id, Category.user_id.is_(None)),
+            Category.status == CategoryStatus.ACTIVE,
+        ),
+    )
+    lookup: dict[str, Category] = {}
+    for category in result.scalars().all():
+        lookup[category.name.strip().lower()] = category
+    return lookup
+
+
 async def find_active_category_by_name(
     session: AsyncSession,
     *,

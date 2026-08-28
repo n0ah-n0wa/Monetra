@@ -15,6 +15,8 @@ import {
 } from "@/features/categories/api";
 import { queryKeys } from "@/lib/query-client";
 
+const REFERENCE_DATA_STALE_MS = 5 * 60_000;
+
 export function useCategoriesQuery(
   params: CategoryListParams = { status: "active", page_size: 100 },
 ) {
@@ -22,6 +24,7 @@ export function useCategoriesQuery(
     queryKey: queryKeys.categories.list(params),
     queryFn: () => fetchCategories(params),
     placeholderData: keepPreviousData,
+    staleTime: REFERENCE_DATA_STALE_MS,
   });
 }
 

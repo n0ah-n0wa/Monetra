@@ -357,6 +357,10 @@ async def evaluate_budgets_after_expense(
     page_size = effective_settings.api_max_page_size
     offset = 0
     created: list[Notification] = []
+    spent_cache: dict[
+        tuple[str, date, date, tuple[uuid.UUID, ...] | None],
+        Decimal,
+    ] = {}
     while True:
         budgets, total = await budget_repo.list_budgets_for_user(
             session,
@@ -370,6 +374,7 @@ async def evaluate_budgets_after_expense(
                 session,
                 budget=budget,
                 as_of_date=as_of_date,
+                spent_cache=spent_cache,
             )
             if utilization is None:
                 continue

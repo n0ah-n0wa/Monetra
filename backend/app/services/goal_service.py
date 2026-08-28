@@ -390,14 +390,30 @@ async def sync_linked_goals_for_account(
         user_id=user_id,
         account_id=account_id,
     )
+    history_cache: dict[tuple[date, str], list[ContributionPoint]] = {}
     for goal in goals:
         previous_current = goal.current_amount
         previous_target = goal.target_amount
-        history = await _build_contribution_history(
-            session,
-            goal=goal,
-            as_of_date=as_of_date,
-        )
+        if goal.linked_account_id is None:
+            history = await _build_contribution_history(
+                session,
+                goal=goal,
+                as_of_date=as_of_date,
+            )
+        else:
+            created_date = goal.created_at.date() if goal.created_at else as_of_date
+            cache_key = (created_date, goal.currency)
+            if cache_key not in history_cache:
+                daily = await goal_repo.sum_daily_net_contributions_for_account(
+                    session,
+                    user_id=goal.user_id,
+                    account_id=goal.linked_account_id,
+                    currency=goal.currency,
+                    start_date=created_date,
+                    end_date=as_of_date,
+                )
+                history_cache[cache_key] = build_cumulative_contribution_history(daily)
+            history = history_cache[cache_key]
         if not history:
             continue
         new_current = normalize_money(history[-1].cumulative_amount)

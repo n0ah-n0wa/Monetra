@@ -94,9 +94,11 @@ export function useLargestExpensesQuery(
   params: AnalyticsQueryParams = DASHBOARD_PERIOD,
   options: QueryOptions = {},
 ) {
+  const limit = params.limit ?? 1;
+  const queryParams = { ...params, limit };
   return useQuery({
-    queryKey: queryKeys.analytics.largestExpenses(params),
-    queryFn: () => fetchLargestExpenses({ ...params, limit: params.limit ?? 1 }),
+    queryKey: queryKeys.analytics.largestExpenses(queryParams),
+    queryFn: () => fetchLargestExpenses(queryParams),
     placeholderData: keepPreviousData,
     enabled: options.enabled ?? true,
   });

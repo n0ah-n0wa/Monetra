@@ -70,6 +70,8 @@ class Transfer(UUIDPrimaryKeyMixin, TimestampMixin, Base):
             "user_id",
             "transaction_date",
         ),
+        Index("ix_transfers_source_account_id", "source_account_id"),
+        Index("ix_transfers_destination_account_id", "destination_account_id"),
         Index(
             "uq_transfers_user_id_idempotency_key",
             "user_id",

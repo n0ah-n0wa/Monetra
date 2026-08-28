@@ -36,3 +36,7 @@ On Windows, the default Compose stack expects the Vite dev server on the host. N
 ## Definition of done
 
 Follow `AGENTS.md` and section 74 of `SPECIFICATIONS.md`. Features are incomplete without tests, lint/type green status, and honest API/docs updates.
+
+## Load testing
+
+See [load-testing.md](./load-testing.md) for the local API load-test runner (`.\scripts\dev.ps1 loadtest`).

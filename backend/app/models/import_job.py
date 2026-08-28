@@ -38,6 +38,7 @@ class ImportJob(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         ),
         Index("ix_import_jobs_user_id", "user_id"),
         Index("ix_import_jobs_user_id_status", "user_id", "status"),
+        Index("ix_import_jobs_user_id_created_at", "user_id", "created_at"),
     )
 
     user_id: Mapped[uuid.UUID] = mapped_column(

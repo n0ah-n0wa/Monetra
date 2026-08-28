@@ -27,6 +27,7 @@ Monetra development commands
   ./scripts/dev.sh build         Build frontend
   ./scripts/dev.sh docker-build  Build Docker images
   ./scripts/dev.sh verify        Full quality gate
+  ./scripts/dev.sh loadtest      Run API load tests (local stack)
 EOF
     ;;
   install)
@@ -67,6 +68,10 @@ EOF
     "$0" build
     "$0" docker-build
     echo "Verification complete."
+    ;;
+  loadtest)
+    shift
+    backend python -m loadtest --quick-seed "$@"
     ;;
   *)
     echo "Unknown command: $cmd" >&2

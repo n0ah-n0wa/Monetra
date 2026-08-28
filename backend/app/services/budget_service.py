@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import UTC, date, datetime
+from decimal import Decimal
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -105,6 +106,11 @@ async def _compute_utilization(
     *,
     budget: Budget,
     as_of_date: date,
+    spent_cache: dict[
+        tuple[str, date, date, tuple[uuid.UUID, ...] | None],
+        Decimal,
+    ]
+    | None = None,
 ) -> BudgetUtilizationResponse | None:
     window = resolve_period_window(
         period=budget.period,
@@ -120,14 +126,25 @@ async def _compute_utilization(
     if budget.scope == BudgetScope.CATEGORY:
         category_ids = [category.id for category in budget.categories]
 
-    spent = await budget_repo.sum_budget_expenses(
-        session,
-        user_id=budget.user_id,
-        currency=budget.currency,
-        period_start=period_start,
-        period_end=period_end,
-        category_ids=category_ids,
+    cache_key = (
+        budget.currency,
+        period_start,
+        period_end,
+        tuple(sorted(category_ids)) if category_ids is not None else None,
     )
+    if spent_cache is not None and cache_key in spent_cache:
+        spent = spent_cache[cache_key]
+    else:
+        spent = await budget_repo.sum_budget_expenses(
+            session,
+            user_id=budget.user_id,
+            currency=budget.currency,
+            period_start=period_start,
+            period_end=period_end,
+            category_ids=category_ids,
+        )
+        if spent_cache is not None:
+            spent_cache[cache_key] = spent
     utilization = compute_budget_utilization(
         period_start=period_start,
         period_end=period_end,
@@ -406,8 +423,18 @@ async def compute_utilization(
     *,
     budget: Budget,
     as_of_date: date,
+    spent_cache: dict[
+        tuple[str, date, date, tuple[uuid.UUID, ...] | None],
+        Decimal,
+    ]
+    | None = None,
 ) -> BudgetUtilizationResponse | None:
-    return await _compute_utilization(session, budget=budget, as_of_date=as_of_date)
+    return await _compute_utilization(
+        session,
+        budget=budget,
+        as_of_date=as_of_date,
+        spent_cache=spent_cache,
+    )
 
 
 def build_budget_response(
@@ -462,11 +489,16 @@ async def get_budget_analytics(
     )
 
     items: list[BudgetAnalyticsItem] = []
+    spent_cache: dict[
+        tuple[str, date, date, tuple[uuid.UUID, ...] | None],
+        Decimal,
+    ] = {}
     for budget in budgets:
         utilization = await _compute_utilization(
             session,
             budget=budget,
             as_of_date=effective_date,
+            spent_cache=spent_cache,
         )
         if utilization is None:
             continue
