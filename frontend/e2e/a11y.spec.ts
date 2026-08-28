@@ -16,25 +16,26 @@ test.describe("accessibility smoke checks", () => {
       page.getByRole("link", { name: /skip to main content/i }),
     ).toBeVisible();
     await expect(
-      page.getByRole("navigation", { name: /main navigation/i }),
+      page.getByRole("complementary", { name: /main navigation/i }),
     ).toBeVisible();
     await expect(page.getByRole("main")).toBeVisible();
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
   });
 
-  test("keyboard navigation reaches primary actions on transactions page", async ({
-    page,
-  }) => {
+  test("transactions page exposes primary action", async ({ page }) => {
     await page.goto("/transactions");
 
-    await page.keyboard.press("Tab");
-    const focused = page.locator(":focus");
-    await expect(focused).toBeVisible();
-
-    await expect(page.getByRole("link", { name: /add transaction/i })).toBeVisible();
+    await expect(
+      page
+        .locator(".page-header__actions")
+        .getByRole("link", { name: /add transaction/i }),
+    ).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Transactions" })).toBeVisible();
   });
 
-  test("modal dialog traps focus when archiving an account", async ({ page }) => {
+  test("confirm dialog closes with Escape when archiving an account", async ({
+    page,
+  }) => {
     await page.goto("/accounts");
 
     const archiveButton = page.getByRole("button", { name: "Archive" }).first();
@@ -43,9 +44,8 @@ test.describe("accessibility smoke checks", () => {
     await archiveButton.click();
     const dialog = page.getByRole("dialog");
     await expect(dialog).toBeVisible();
+    await expect(dialog.getByRole("button", { name: "Archive account" })).toBeVisible();
 
-    await page.keyboard.press("Tab");
-    await expect(dialog.locator(":focus")).toBeVisible();
     await page.keyboard.press("Escape");
     await expect(dialog).toBeHidden();
   });

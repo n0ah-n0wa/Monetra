@@ -1,4 +1,5 @@
 import { useEffect, useId, useRef, type ReactNode } from "react";
+import { createPortal } from "react-dom";
 import { Button } from "@/components/ui/Button";
 import { focusInitialElement, trapTabKey } from "@/lib/focus-trap";
 import { cn } from "@/lib/utils";
@@ -81,7 +82,7 @@ export function Modal({
     return null;
   }
 
-  return (
+  return createPortal(
     <div className="modal-root" role="presentation">
       <button
         type="button"
@@ -116,6 +117,7 @@ export function Modal({
         </header>
         <div className="modal__body">{children}</div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

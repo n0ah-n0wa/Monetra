@@ -7,7 +7,10 @@ test.describe("Goals", () => {
     const user = await registerUser(request, "goal");
     await loginViaUi(page, user);
     await navigateViaSidebar(page, "Goals", "Goals");
-    await page.getByRole("button", { name: "Add goal" }).click();
+    await page
+      .locator(".page-header__actions")
+      .getByRole("button", { name: "Add goal" })
+      .click();
     const dialog = page.getByRole("dialog");
     await dialog.getByLabel(/^name/i).fill("E2E Emergency Fund");
     await dialog.getByLabel(/target amount/i).fill("5000.00");

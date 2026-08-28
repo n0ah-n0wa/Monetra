@@ -8,6 +8,14 @@ async function openMobileNavIfNeeded(page: Page): Promise<void> {
   }
 }
 
+function pageHeaderButton(page: Page, name: string | RegExp) {
+  return page.locator(".page-header__actions").getByRole("button", { name });
+}
+
+function pageHeaderLink(page: Page, name: string | RegExp) {
+  return page.locator(".page-header__actions").getByRole("link", { name });
+}
+
 export async function navigateViaSidebar(
   page: Page,
   linkLabel: string,
@@ -27,7 +35,7 @@ export async function createAccountViaUi(
   options: { opening_balance?: string; currency?: string } = {},
 ): Promise<void> {
   await navigateViaSidebar(page, "Accounts", "Accounts");
-  await page.getByRole("button", { name: "Add account" }).click();
+  await pageHeaderButton(page, "Add account").click();
   const dialog = page.getByRole("dialog");
   await dialog.getByLabel(/^name/i).fill(name);
   if (options.currency) {
@@ -47,7 +55,7 @@ export async function createCategoryViaUi(
   type: "Income" | "Expense",
 ): Promise<void> {
   await navigateViaSidebar(page, "Categories", "Categories");
-  await page.getByRole("button", { name: "Add category" }).click();
+  await pageHeaderButton(page, "Add category").click();
   const dialog = page.getByRole("dialog");
   await dialog.getByLabel(/^name/i).fill(name);
   await dialog.getByLabel(/^type/i).selectOption(type);
@@ -67,7 +75,7 @@ export async function createTransactionViaUi(
   },
 ): Promise<void> {
   await navigateViaSidebar(page, "Transactions", "Transactions");
-  await page.getByRole("link", { name: "Add transaction" }).click();
+  await pageHeaderLink(page, "Add transaction").click();
   await page.getByRole("heading", { name: "Add transaction" }).waitFor();
   await page.getByLabel(/^type/i).selectOption(options.type);
   if (options.accountName) {

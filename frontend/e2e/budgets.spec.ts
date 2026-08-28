@@ -24,7 +24,10 @@ test.describe("Budgets", () => {
 
     await loginViaUi(page, user);
     await navigateViaSidebar(page, "Budgets", "Budgets");
-    await page.getByRole("button", { name: "Add budget" }).click();
+    await page
+      .locator(".page-header__actions")
+      .getByRole("button", { name: "Add budget" })
+      .click();
     const dialog = page.getByRole("dialog");
     await dialog.getByLabel(/^name/i).fill("E2E Groceries Budget");
     await dialog.getByLabel(/^amount/i).fill("100.00");

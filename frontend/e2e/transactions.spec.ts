@@ -57,7 +57,7 @@ test.describe("Transactions", () => {
     await loginViaUi(page, user);
     await navigateViaSidebar(page, "Transactions", "Transactions");
     const lunchRow = page.getByRole("row").filter({ hasText: "Original lunch" });
-    await lunchRow.getByRole("link", { name: "Original lunch" }).click();
+    await lunchRow.getByRole("link", { name: "Original lunch", exact: true }).click();
     await page.getByRole("button", { name: "Edit" }).click();
     await page.getByLabel(/^description/i).fill("Updated lunch");
     await page.getByRole("button", { name: /save changes/i }).click();
