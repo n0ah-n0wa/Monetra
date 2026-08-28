@@ -69,7 +69,9 @@ async def test_register_normalizes_email(auth_client: AsyncClient) -> None:
     assert login.status_code == 200
 
 
-async def test_register_duplicate_email(auth_client: AsyncClient) -> None:
+async def test_register_duplicate_email_does_not_enumerate(
+    auth_client: AsyncClient,
+) -> None:
     email = _unique_email("dup")
     first = await auth_client.post(
         f"{API}/auth/register",
@@ -83,7 +85,9 @@ async def test_register_duplicate_email(auth_client: AsyncClient) -> None:
     )
     assert second.status_code == 409
     body = second.json()
-    assert body["error"]["code"] == "EMAIL_ALREADY_REGISTERED"
+    assert body["error"]["code"] == "REGISTRATION_FAILED"
+    assert "already have an account" not in body["error"]["message"].lower()
+    assert "email already" not in body["error"]["message"].lower()
 
 
 async def test_register_weak_password(auth_client: AsyncClient) -> None:

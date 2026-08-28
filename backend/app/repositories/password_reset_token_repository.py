@@ -40,6 +40,25 @@ async def create_password_reset_token(
     return token
 
 
+async def get_latest_active_reset_token_for_user(
+    session: AsyncSession,
+    user_id: uuid.UUID,
+) -> PasswordResetToken | None:
+    """Return the newest unused, unexpired reset token for a user."""
+    now = datetime.now(UTC)
+    result = await session.execute(
+        select(PasswordResetToken)
+        .where(
+            PasswordResetToken.user_id == user_id,
+            PasswordResetToken.used_at.is_(None),
+            PasswordResetToken.expires_at > now,
+        )
+        .order_by(PasswordResetToken.created_at.desc())
+        .limit(1),
+    )
+    return result.scalar_one_or_none()
+
+
 async def invalidate_active_tokens_for_user(
     session: AsyncSession,
     user_id: uuid.UUID,

@@ -39,6 +39,15 @@ async def request_password_reset(
     normalized_email = normalize_email(email)
     user = await user_repo.get_user_by_email(session, normalized_email)
     if user is not None:
+        now = datetime.now(UTC)
+        cooldown = timedelta(seconds=settings.password_reset_request_cooldown_seconds)
+        active = await reset_repo.get_latest_active_reset_token_for_user(
+            session,
+            user.id,
+        )
+        if active is not None and active.created_at > now - cooldown:
+            return RESET_REQUEST_ACK_MESSAGE
+
         await reset_repo.invalidate_active_tokens_for_user(session, user.id)
         reset_token = generate_password_reset_token()
         expires_at = _reset_expiry(settings)

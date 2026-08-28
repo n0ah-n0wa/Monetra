@@ -53,6 +53,8 @@ def test_production_disables_docs() -> None:
         cors_origins=["https://app.example.com"],
     )
     assert settings.is_production
+    assert settings.trusted_proxy_count == 1
+    assert settings.refresh_token_cookie_secure is True
     assert settings.docs_url is None
     assert settings.redoc_url is None
     assert settings.openapi_url is None

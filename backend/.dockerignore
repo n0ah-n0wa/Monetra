@@ -8,6 +8,11 @@ __pycache__
 .coverage
 htmlcov
 .env
+.env.*
 *.egg
 dist
 build
+.git
+.github
+tests
+.hypothesis

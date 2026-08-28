@@ -45,8 +45,11 @@ async def register_user(
     existing = await user_repo.get_user_by_email(session, normalized_email)
     if existing is not None:
         raise ConflictError(
-            code="EMAIL_ALREADY_REGISTERED",
-            message="An account with this email already exists.",
+            code="REGISTRATION_FAILED",
+            message=(
+                "Unable to complete registration. "
+                "If you already have an account, try signing in."
+            ),
         )
 
     user = await user_repo.create_user(

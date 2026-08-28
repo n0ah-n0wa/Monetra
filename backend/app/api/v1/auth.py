@@ -10,6 +10,7 @@ from app.api.deps import (
     SettingsDep,
     enforce_auth_rate_limit,
     enforce_cookie_auth_origin,
+    enforce_password_reset_rate_limit,
 )
 from app.core.cookies import clear_refresh_token_cookie, set_refresh_token_cookie
 from app.schemas.auth import (
@@ -23,6 +24,14 @@ from app.schemas.auth import (
 from app.services import auth_service, password_reset_service
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+
+
+async def _enforce_password_reset_request_rate_limit(
+    request: Request,
+    settings: SettingsDep,
+    payload: PasswordResetRequest,
+) -> None:
+    await enforce_password_reset_rate_limit(request, settings, payload.email)
 
 
 def _read_refresh_cookie(request: Request, settings: SettingsDep) -> str | None:
@@ -123,7 +132,7 @@ async def request_password_reset(
     session: SessionDep,
     settings: SettingsDep,
     notification_provider: NotificationProviderDep,
-    _: Annotated[None, Depends(enforce_auth_rate_limit)],
+    _: Annotated[None, Depends(_enforce_password_reset_request_rate_limit)],
 ) -> PasswordResetAckResponse:
     message = await password_reset_service.request_password_reset(
         session,

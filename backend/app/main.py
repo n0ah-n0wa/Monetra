@@ -167,7 +167,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     application.state.settings = cfg
 
     # Last added = outermost. Request ID should wrap responses from inner layers.
-    application.add_middleware(SecurityHeadersMiddleware)
+    application.add_middleware(SecurityHeadersMiddleware, settings=cfg)
     application.add_middleware(RequestIdMiddleware)
     application.add_middleware(
         CORSMiddleware,

@@ -8,12 +8,18 @@ from typing import Annotated
 from fastapi import Depends, Header, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.client_ip import resolve_client_ip
 from app.core.config import Settings, get_settings
 from app.core.csrf import validate_cookie_auth_origin
 from app.core.exceptions import ForbiddenError, RateLimitError, UnauthorizedError
 from app.core.rate_limit import get_rate_limiter
-from app.core.security import assert_access_token_active_for_user, decode_access_token
+from app.core.security import (
+    assert_access_token_active_for_user,
+    decode_access_token,
+    hash_opaque_token,
+)
 from app.db.session import get_db
+from app.domain.email import normalize_email
 from app.domain.notifications import NotificationProvider
 from app.models.user import User
 from app.repositories import user_repository as user_repo
@@ -32,18 +38,60 @@ def get_app_notification_provider(request: Request) -> NotificationProvider:
     return get_notification_provider(request.app)
 
 
-async def enforce_auth_rate_limit(request: Request, settings: SettingsDep) -> None:
-    client = request.client
-    client_host = client.host if client is not None else "unknown"
-    key = f"{client_host}:{request.url.path}"
+def _enforce_rate_limit(
+    request: Request,
+    settings: Settings,
+    *,
+    key: str,
+    limit: int,
+    window_seconds: int,
+) -> None:
     limiter = get_rate_limiter(request.app)
     allowed = limiter.allow(
         key,
-        limit=settings.auth_rate_limit_max_requests,
-        window_seconds=settings.auth_rate_limit_window_seconds,
+        limit=limit,
+        window_seconds=window_seconds,
     )
     if not allowed:
         raise RateLimitError()
+
+
+async def enforce_auth_rate_limit(request: Request, settings: SettingsDep) -> None:
+    client_host = resolve_client_ip(request, settings)
+    key = f"{client_host}:{request.url.path}"
+    _enforce_rate_limit(
+        request,
+        settings,
+        key=key,
+        limit=settings.auth_rate_limit_max_requests,
+        window_seconds=settings.auth_rate_limit_window_seconds,
+    )
+
+
+async def enforce_password_reset_rate_limit(
+    request: Request,
+    settings: SettingsDep,
+    email: str,
+) -> None:
+    """Apply IP and per-email limits to password-reset requests."""
+    client_host = resolve_client_ip(request, settings)
+    ip_key = f"{client_host}:{request.url.path}"
+    _enforce_rate_limit(
+        request,
+        settings,
+        key=ip_key,
+        limit=settings.auth_rate_limit_max_requests,
+        window_seconds=settings.auth_rate_limit_window_seconds,
+    )
+    normalized = normalize_email(email)
+    email_key = f"pwdreset:{hash_opaque_token(normalized)}:{request.url.path}"
+    _enforce_rate_limit(
+        request,
+        settings,
+        key=email_key,
+        limit=settings.password_reset_email_rate_limit_max_requests,
+        window_seconds=settings.auth_rate_limit_window_seconds,
+    )
 
 
 async def enforce_cookie_auth_origin(request: Request, settings: SettingsDep) -> None:
@@ -121,6 +169,7 @@ __all__ = [
     "enforce_auth_rate_limit",
     "enforce_cookie_auth_origin",
     "enforce_exchange_rate_write_access",
+    "enforce_password_reset_rate_limit",
     "get_app_notification_provider",
     "get_app_settings",
     "get_current_user",

@@ -64,6 +64,9 @@ class Settings(BaseSettings):
 
     auth_rate_limit_max_requests: int = Field(default=10, ge=1)
     auth_rate_limit_window_seconds: int = Field(default=60, ge=1)
+    password_reset_email_rate_limit_max_requests: int = Field(default=3, ge=1)
+    password_reset_request_cooldown_seconds: int = Field(default=300, ge=60)
+    trusted_proxy_count: int = Field(default=0, ge=0)
 
     api_default_page_size: int = Field(default=20, ge=1)
     api_max_page_size: int = Field(default=100, ge=1)
@@ -98,6 +101,8 @@ class Settings(BaseSettings):
                 msg = "CORS_ORIGINS must not use wildcard '*' in production"
                 raise ValueError(msg)
             object.__setattr__(self, "refresh_token_cookie_secure", True)
+            if self.trusted_proxy_count < 1:
+                object.__setattr__(self, "trusted_proxy_count", 1)
         return self
 
     @property

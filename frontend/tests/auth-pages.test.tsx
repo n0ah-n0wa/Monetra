@@ -117,7 +117,12 @@ describe("auth pages", () => {
   it("maps registration field errors from the API", async () => {
     const user = userEvent.setup();
     vi.mocked(authApi.register).mockRejectedValue(
-      new ApiError("Email is already registered.", 409, {}, "EMAIL_ALREADY_REGISTERED"),
+      new ApiError(
+        "Unable to complete registration. If you already have an account, try signing in.",
+        409,
+        {},
+        "REGISTRATION_FAILED",
+      ),
     );
 
     renderWithAuth(<RegisterPage />, {
@@ -130,7 +135,7 @@ describe("auth pages", () => {
     await user.type(screen.getByLabelText(/^password/i), "Password1");
     await user.click(screen.getByRole("button", { name: /create account/i }));
 
-    expect(await screen.findByText(/email is already registered/i)).toBeInTheDocument();
+    expect(await screen.findByText(/try signing in/i)).toBeInTheDocument();
   });
 
   it("shows forgot-password success acknowledgement", async () => {

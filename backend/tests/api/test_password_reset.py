@@ -248,9 +248,37 @@ async def test_password_reset_confirm_rejects_weak_password(
     assert response.json()["error"]["code"] == "WEAK_PASSWORD"
 
 
-async def test_password_reset_invalidates_previous_outstanding_token(
+async def test_password_reset_rapid_requests_preserve_active_token(
     auth_client: AsyncClient,
     notification_provider: InMemoryNotificationProvider,
+) -> None:
+    """Reset requests within the cooldown must not invalidate the prior token."""
+    email = _unique_email("cooldown")
+    await _register_user(auth_client, email)
+    await auth_client.post(
+        f"{API}/auth/password-reset/request",
+        json={"email": email},
+    )
+    first = notification_provider.latest_password_reset()
+    assert first is not None
+
+    await auth_client.post(
+        f"{API}/auth/password-reset/request",
+        json={"email": email},
+    )
+    assert notification_provider.latest_password_reset() is first
+
+    still_valid = await auth_client.post(
+        f"{API}/auth/password-reset/confirm",
+        json={"token": first.reset_token, "new_password": NEW_PASSWORD},
+    )
+    assert still_valid.status_code == 204
+
+
+async def test_password_reset_new_request_after_cooldown_supersedes_token(
+    auth_client: AsyncClient,
+    notification_provider: InMemoryNotificationProvider,
+    db_engine: AsyncEngine,
 ) -> None:
     email = _unique_email("supersede")
     await _register_user(auth_client, email)
@@ -260,6 +288,18 @@ async def test_password_reset_invalidates_previous_outstanding_token(
     )
     first = notification_provider.latest_password_reset()
     assert first is not None
+
+    async with db_engine.begin() as connection:
+        await connection.execute(
+            text(
+                "UPDATE password_reset_tokens "
+                "SET created_at = :created_at WHERE token_hash = :token_hash",
+            ),
+            {
+                "created_at": datetime.now(UTC) - timedelta(minutes=10),
+                "token_hash": hash_opaque_token(first.reset_token),
+            },
+        )
 
     await auth_client.post(
         f"{API}/auth/password-reset/request",

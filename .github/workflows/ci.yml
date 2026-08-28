@@ -90,7 +90,27 @@ jobs:
       - name: Build images
         run: |
           docker compose build
+          docker build -t monetra-backend:ci ./backend --target production
           docker build -t monetra-frontend:ci ./frontend --target production
+      - name: Verify production containers run as non-root
+        run: |
+          backend_uid="$(docker run --rm monetra-backend:ci id -u)"
+          frontend_uid="$(docker run --rm monetra-frontend:ci id -u)"
+          if [ "$backend_uid" = "0" ]; then
+            echo "Backend production image must not run as root"
+            exit 1
+          fi
+          if [ "$frontend_uid" = "0" ]; then
+            echo "Frontend production image must not run as root"
+            exit 1
+          fi
+          echo "Backend UID: $backend_uid, Frontend UID: $frontend_uid"
+      - name: Verify no secrets in image env
+        run: |
+          if docker run --rm monetra-backend:ci env | grep -E 'JWT_SECRET_KEY=change-me'; then
+            echo "Default JWT secret must not be baked into the image"
+            exit 1
+          fi
 
   e2e:
     name: E2E (Playwright)

@@ -9,6 +9,7 @@ import uuid
 from starlette.datastructures import MutableHeaders
 from starlette.types import ASGIApp, Message, Receive, Scope, Send
 
+from app.core.config import Settings
 from app.core.request_context import reset_request_id, set_request_id
 
 REQUEST_ID_HEADER = "X-Request-ID"
@@ -53,13 +54,21 @@ class RequestIdMiddleware:
 class SecurityHeadersMiddleware:
     """Attach baseline security headers to every response."""
 
-    def __init__(self, app: ASGIApp) -> None:
+    def __init__(self, app: ASGIApp, *, settings: Settings | None = None) -> None:
         self.app = app
+        self._settings = settings
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         if scope["type"] != "http":
             await self.app(scope, receive, send)
             return
+
+        header_map = {
+            key.decode("latin-1").lower(): value.decode("latin-1")
+            for key, value in scope.get("headers", [])
+        }
+        forwarded_proto = header_map.get("x-forwarded-proto", "").split(",")[0].strip()
+        is_https = forwarded_proto == "https"
 
         async def send_wrapper(message: Message) -> None:
             if message["type"] == "http.response.start":
@@ -74,6 +83,12 @@ class SecurityHeadersMiddleware:
                     "Permissions-Policy",
                     "geolocation=(), microphone=(), camera=()",
                 )
+                settings = self._settings
+                if settings is not None and settings.is_production and is_https:
+                    headers.setdefault(
+                        "Strict-Transport-Security",
+                        "max-age=31536000; includeSubDomains",
+                    )
             await send(message)
 
         await self.app(scope, receive, send_wrapper)

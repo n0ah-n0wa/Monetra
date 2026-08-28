@@ -73,12 +73,12 @@ describe("getFieldErrors", () => {
 
   it("maps duplicate email registration to email", () => {
     const error = new ApiError(
-      "Email is already registered.",
+      "Unable to complete registration. If you already have an account, try signing in.",
       409,
       {},
-      "EMAIL_ALREADY_REGISTERED",
+      "REGISTRATION_FAILED",
     );
-    expect(getFieldErrors(error).email).toBe("Email is already registered.");
+    expect(getFieldErrors(error).email).toContain("Unable to complete registration");
   });
 
   it("maps invalid reset token to token field", () => {

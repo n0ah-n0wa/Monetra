@@ -82,7 +82,7 @@ export function getFieldErrors(error: unknown): Record<string, string> {
   const fieldErrors: Record<string, string> = {};
   const details = error.details;
 
-  if (error.code === "EMAIL_ALREADY_REGISTERED") {
+  if (error.code === "REGISTRATION_FAILED") {
     fieldErrors.email = error.message;
   }
 
