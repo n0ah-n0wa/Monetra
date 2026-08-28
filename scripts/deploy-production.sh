@@ -54,7 +54,9 @@ fi
 
 chmod +x "$ROOT"/scripts/validate-production-env.sh \
   "$ROOT"/scripts/smoke-production.sh \
-  "$ROOT"/scripts/backup-database.sh 2>/dev/null || true
+  "$ROOT"/scripts/backup-database.sh \
+  "$ROOT"/scripts/restore-database.sh \
+  "$ROOT"/scripts/test-backup-restore.sh 2>/dev/null || true
 
 "$ROOT/scripts/validate-production-env.sh"
 

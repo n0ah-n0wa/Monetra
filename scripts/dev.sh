@@ -31,6 +31,7 @@ Monetra development commands
   ./scripts/dev.sh prod-down     Stop production Compose stack
   ./scripts/dev.sh prod-verify   Build and smoke-test production stack
   ./scripts/dev.sh prod-clean-test  Clean-volume production deploy test
+  ./scripts/dev.sh backup-restore-test  Backup/restore drill (non-production)
   ./scripts/dev.sh verify        Full quality gate
   ./scripts/dev.sh loadtest      Run API load tests (local stack)
 EOF
@@ -104,6 +105,9 @@ EOF
     ;;
   prod-clean-test)
     ./scripts/prod-clean-deploy-test.sh
+    ;;
+  backup-restore-test)
+    ./scripts/test-backup-restore.sh
     ;;
   verify)
     "$0" lint

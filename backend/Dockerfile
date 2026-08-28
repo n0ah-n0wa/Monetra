@@ -44,6 +44,7 @@ RUN python -m venv /opt/venv
 
 COPY pyproject.toml README.md ./
 COPY app ./app
+COPY scripts ./scripts
 COPY alembic ./alembic
 COPY alembic.ini ./
 
@@ -64,6 +65,7 @@ FROM base AS production
 
 COPY --from=builder /opt/venv /opt/venv
 COPY app ./app
+COPY scripts ./scripts
 COPY alembic ./alembic
 COPY alembic.ini ./
 COPY docker-entrypoint.sh /docker-entrypoint.sh

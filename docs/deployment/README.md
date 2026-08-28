@@ -30,7 +30,7 @@ EC2 instance
 | [AWS EC2 host setup](./aws-ec2.md) | Instance sizing, OS hardening, Docker install, security groups, host firewall |
 | [Configuration and secrets](./configuration.md) | Environment variables, `.env` layout, secret generation and storage |
 | [Deployment runbook](./deploy.md) | DNS, TLS, first deploy, upgrades, migrations, health checks, rollback |
-| [Backup and restore](./backup-restore.md) | Scheduled PostgreSQL backups, retention, restore and disaster recovery |
+| [Backup and restore](./backup-restore.md) | Scheduled PostgreSQL backups, retention, restore drills, disaster recovery |
 | [GitHub Actions CI/CD](./github-actions.md) | CI jobs, production deploy workflow, required secrets |
 | [SRE audit](./sre-audit.md) | Production readiness review and failure scenarios |
 

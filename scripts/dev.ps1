@@ -21,6 +21,7 @@ param(
     "prod-down",
     "prod-verify",
     "prod-clean-test",
+    "backup-restore-test",
     "verify",
     "loadtest"
   )]
@@ -63,7 +64,8 @@ Monetra development commands
   .\scripts\dev.ps1 prod-build    Build production Docker images
   .\scripts\dev.ps1 prod-up       Start production Compose stack
   .\scripts\dev.ps1 prod-down     Stop production Compose stack
-  .\scripts\dev.ps1 prod-verify   Build and smoke-test production stack
+  .\scripts\dev.ps1 prod-clean-test   Clean-volume production deploy test
+  .\scripts\dev.ps1 backup-restore-test  Backup/restore drill (non-production)
   .\scripts\dev.ps1 verify        Full quality gate
   .\scripts\dev.ps1 loadtest      Run API load tests (local stack)
 "@
@@ -178,6 +180,9 @@ Monetra development commands
   }
   "prod-clean-test" {
     & (Join-Path $PSScriptRoot "prod-clean-deploy-test.ps1")
+  }
+  "backup-restore-test" {
+    & (Join-Path $PSScriptRoot "test-backup-restore.ps1")
   }
   "verify" {
     & $PSCommandPath lint

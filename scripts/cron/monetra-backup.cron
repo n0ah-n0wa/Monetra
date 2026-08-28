@@ -1,0 +1,9 @@
+# Daily Monetra PostgreSQL logical backup (02:15 UTC).
+# Install on the EC2 host:
+#   sudo cp /opt/monetra/scripts/cron/monetra-backup.cron /etc/cron.d/monetra-backup
+#   sudo chmod 644 /etc/cron.d/monetra-backup
+#
+# Logs append to /var/log/monetra-backup.log (create and chown if needed).
+SHELL=/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+15 2 * * * monetra /opt/monetra/scripts/backup-database.sh >> /var/log/monetra-backup.log 2>&1
