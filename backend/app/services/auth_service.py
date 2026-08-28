@@ -46,10 +46,7 @@ async def register_user(
     if existing is not None:
         raise ConflictError(
             code="REGISTRATION_FAILED",
-            message=(
-                "Unable to complete registration. "
-                "Please try again or sign in."
-            ),
+            message="Unable to complete registration. Please try again or sign in.",
         )
 
     user = await user_repo.create_user(

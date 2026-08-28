@@ -135,7 +135,9 @@ describe("auth pages", () => {
     await user.type(screen.getByLabelText(/^password/i), "Password1");
     await user.click(screen.getByRole("button", { name: /create account/i }));
 
-    expect(await screen.findByText(/try signing in/i)).toBeInTheDocument();
+    expect(await screen.findByRole("alert")).toHaveTextContent(
+      "Unable to complete registration. Please try again or sign in.",
+    );
   });
 
   it("shows forgot-password success acknowledgement", async () => {
