@@ -48,7 +48,7 @@ async def register_user(
             code="REGISTRATION_FAILED",
             message=(
                 "Unable to complete registration. "
-                "If you already have an account, try signing in."
+                "Please try again or sign in."
             ),
         )
 

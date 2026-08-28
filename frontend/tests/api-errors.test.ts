@@ -73,7 +73,7 @@ describe("getFieldErrors", () => {
 
   it("maps duplicate email registration to email", () => {
     const error = new ApiError(
-      "Unable to complete registration. If you already have an account, try signing in.",
+      "Unable to complete registration. Please try again or sign in.",
       409,
       {},
       "REGISTRATION_FAILED",

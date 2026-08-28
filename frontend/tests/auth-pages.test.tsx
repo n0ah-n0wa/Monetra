@@ -118,7 +118,7 @@ describe("auth pages", () => {
     const user = userEvent.setup();
     vi.mocked(authApi.register).mockRejectedValue(
       new ApiError(
-        "Unable to complete registration. If you already have an account, try signing in.",
+        "Unable to complete registration. Please try again or sign in.",
         409,
         {},
         "REGISTRATION_FAILED",
