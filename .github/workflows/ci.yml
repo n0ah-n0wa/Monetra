@@ -166,6 +166,13 @@ jobs:
   docker:
     name: Docker builds
     runs-on: ubuntu-latest
+    env:
+      # Compose interpolates docker-compose.prod.yml at build time; these are
+      # ephemeral CI-only values and are not baked into production images.
+      POSTGRES_DB: monetra
+      POSTGRES_USER: monetra
+      POSTGRES_PASSWORD: ci-docker-build-only-not-production
+      JWT_SECRET_KEY: ci-docker-build-only-secret-at-least-32-chars
     steps:
       - uses: actions/checkout@v4
       - name: Build development Compose images

@@ -30,7 +30,7 @@ Jobs (run in parallel unless noted):
 | `e2e` | Playwright against local backend + Vite dev server |
 | `quality-gate` | Fails the workflow if any job above failed |
 
-Pull requests cannot merge (when branch protection is enabled) until **Quality gate** succeeds.
+CI runs `docker compose -f docker-compose.prod.yml build`, which requires Compose variable interpolation. The **Docker builds** job exports ephemeral CI-only values for `POSTGRES_*` and `JWT_SECRET_KEY` (not production secrets and not baked into images).
 
 ## Production deployment
 
