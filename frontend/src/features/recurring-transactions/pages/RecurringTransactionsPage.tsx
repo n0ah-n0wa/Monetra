@@ -176,7 +176,9 @@ export function RecurringTransactionsPage() {
               ? "Create an account first, then add a recurring schedule."
               : "Create a recurring transaction to automate scheduled income or expenses."
           }
-          actionLabel={accounts.length === 0 ? "Create account" : "Add recurring transaction"}
+          actionLabel={
+            accounts.length === 0 ? "Create account" : "Add recurring transaction"
+          }
           actionHref={accounts.length === 0 ? routes.accounts : undefined}
           onAction={
             accounts.length === 0 ? undefined : () => setDialog({ type: "create" })

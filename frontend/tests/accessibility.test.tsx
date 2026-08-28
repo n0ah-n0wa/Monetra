@@ -34,7 +34,12 @@ describe("Modal accessibility", () => {
     const onClose = vi.fn();
 
     render(
-      <Modal open title="Delete account" description="This cannot be undone." onClose={onClose}>
+      <Modal
+        open
+        title="Delete account"
+        description="This cannot be undone."
+        onClose={onClose}
+      >
         <button type="button">Confirm</button>
       </Modal>,
     );
@@ -103,19 +108,16 @@ describe("application shell accessibility", () => {
   });
 
   it("announces signed-in user email to screen readers", async () => {
-    renderWithAuth(
-      <Header sidebarOpen={false} onMenuToggle={() => undefined} />,
-      {
-        authenticated: true,
-        initialEntries: ["/"],
-        routes: [
-          {
-            path: "*",
-            element: <Header sidebarOpen={false} onMenuToggle={() => undefined} />,
-          },
-        ],
-      },
-    );
+    renderWithAuth(<Header sidebarOpen={false} onMenuToggle={() => undefined} />, {
+      authenticated: true,
+      initialEntries: ["/"],
+      routes: [
+        {
+          path: "*",
+          element: <Header sidebarOpen={false} onMenuToggle={() => undefined} />,
+        },
+      ],
+    });
 
     expect(await screen.findByText(/signed in as/i)).toBeInTheDocument();
     expect(await screen.findByText("user@example.com")).toBeInTheDocument();

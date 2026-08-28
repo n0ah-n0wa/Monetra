@@ -313,10 +313,7 @@ export function TransfersPage() {
                 align: "right",
                 cellClassName: "transaction-data-table__amount",
                 cell: (transfer) =>
-                  formatMoneyDisplay(
-                    transfer.source_amount,
-                    transfer.source_currency,
-                  ),
+                  formatMoneyDisplay(transfer.source_amount, transfer.source_currency),
               },
             ]}
           />
