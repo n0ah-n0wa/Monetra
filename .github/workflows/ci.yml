@@ -92,10 +92,12 @@ jobs:
           docker compose build
           docker build -t monetra-backend:ci ./backend --target production
           docker build -t monetra-frontend:ci ./frontend --target production
+          docker build -t monetra-nginx:ci ./nginx --target production
       - name: Verify production containers run as non-root
         run: |
           backend_uid="$(docker run --rm monetra-backend:ci id -u)"
           frontend_uid="$(docker run --rm monetra-frontend:ci id -u)"
+          nginx_uid="$(docker run --rm monetra-nginx:ci id -u)"
           if [ "$backend_uid" = "0" ]; then
             echo "Backend production image must not run as root"
             exit 1
@@ -104,7 +106,14 @@ jobs:
             echo "Frontend production image must not run as root"
             exit 1
           fi
-          echo "Backend UID: $backend_uid, Frontend UID: $frontend_uid"
+          if [ "$nginx_uid" = "0" ]; then
+            nginx_uid="$(docker run --rm --entrypoint su-exec monetra-nginx:ci nginx id -u)"
+          fi
+          if [ "$nginx_uid" = "0" ]; then
+            echo "Nginx production image must not run worker processes as root"
+            exit 1
+          fi
+          echo "Backend UID: $backend_uid, Frontend UID: $frontend_uid, Nginx UID: $nginx_uid"
       - name: Verify no secrets in image env
         run: |
           if docker run --rm monetra-backend:ci env | grep -E 'JWT_SECRET_KEY=change-me'; then

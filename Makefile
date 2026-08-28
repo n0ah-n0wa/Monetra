@@ -74,7 +74,7 @@ build-frontend:
 
 docker-build:
 	docker compose build
-	docker build -t monetra-frontend:local ./frontend --target production
+	docker compose -f docker-compose.prod.yml build
 
 verify: lint typecheck test build docker-build
 	@echo "Verification complete."

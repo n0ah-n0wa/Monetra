@@ -1,0 +1,110 @@
+upstream monetra_backend {
+    server backend:8000;
+    keepalive 16;
+}
+
+upstream monetra_frontend {
+    server frontend:8080;
+    keepalive 8;
+}
+
+# Internal HTTP listener for health checks and HTTP->HTTPS redirects.
+server {
+    listen 8080;
+    server_name ${NGINX_SERVER_NAME};
+
+    include /etc/nginx/includes/security_headers.conf;
+
+    location = /nginx-health {
+        access_log off;
+        default_type text/plain;
+        return 200 "ok\n";
+    }
+
+    location / {
+        return 301 https://$host$request_uri;
+    }
+}
+
+server {
+    listen 8443 ssl;
+    http2 on;
+    server_name ${NGINX_SERVER_NAME};
+
+    ssl_certificate /etc/nginx/certs/fullchain.pem;
+    ssl_certificate_key /etc/nginx/certs/privkey.pem;
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_prefer_server_ciphers on;
+    ssl_session_cache shared:SSL:10m;
+    ssl_session_timeout 1d;
+
+    client_max_body_size ${NGINX_CLIENT_MAX_BODY_SIZE};
+
+    include /etc/nginx/includes/security_headers.conf;
+    ${NGINX_HSTS_DIRECTIVE}
+    add_header Content-Security-Policy "${NGINX_CSP}" always;
+
+    # Block dotfiles and other hidden paths.
+    location ~ /\. {
+        deny all;
+        access_log off;
+        log_not_found off;
+    }
+
+    location = /health {
+        include /etc/nginx/includes/proxy_backend.conf;
+        proxy_pass http://monetra_backend/health;
+    }
+
+    location = /ready {
+        include /etc/nginx/includes/proxy_backend.conf;
+        proxy_pass http://monetra_backend/ready;
+    }
+
+    location /api/ {
+        include /etc/nginx/includes/proxy_backend.conf;
+        proxy_pass http://monetra_backend/api/;
+        expires epoch;
+    }
+
+    # Longer timeout for export downloads.
+    location /api/v1/exports/ {
+        proxy_pass http://monetra_backend/api/v1/exports/;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto https;
+        proxy_set_header X-Request-ID $http_x_request_id;
+        proxy_set_header Connection "";
+        proxy_connect_timeout 10s;
+        proxy_send_timeout 60s;
+        proxy_read_timeout 120s;
+        expires epoch;
+    }
+
+    # Vite build assets are content-hashed and safe to cache aggressively.
+    location ^~ /assets/ {
+        include /etc/nginx/includes/proxy_frontend.conf;
+        proxy_pass http://monetra_frontend;
+        expires 1y;
+    }
+
+    location ~* \.(?:css|js|mjs|map|ico|png|jpg|jpeg|gif|svg|webp|avif|woff2?|ttf|eot)$ {
+        include /etc/nginx/includes/proxy_frontend.conf;
+        proxy_pass http://monetra_frontend;
+        expires 7d;
+    }
+
+    location = /index.html {
+        include /etc/nginx/includes/proxy_frontend.conf;
+        proxy_pass http://monetra_frontend;
+        expires epoch;
+    }
+
+    location / {
+        include /etc/nginx/includes/proxy_frontend.conf;
+        proxy_pass http://monetra_frontend;
+        expires epoch;
+    }
+}

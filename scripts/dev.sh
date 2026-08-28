@@ -26,6 +26,10 @@ Monetra development commands
   ./scripts/dev.sh test          Run unit tests
   ./scripts/dev.sh build         Build frontend
   ./scripts/dev.sh docker-build  Build Docker images
+  ./scripts/dev.sh prod-build    Build production Docker images
+  ./scripts/dev.sh prod-up       Start production Compose stack
+  ./scripts/dev.sh prod-down     Stop production Compose stack
+  ./scripts/dev.sh prod-verify   Build and smoke-test production stack
   ./scripts/dev.sh verify        Full quality gate
   ./scripts/dev.sh loadtest      Run API load tests (local stack)
 EOF
@@ -59,7 +63,43 @@ EOF
     ;;
   docker-build)
     docker compose build
-    docker build -t monetra-frontend:local ./frontend --target production
+    docker compose -f docker-compose.prod.yml build
+    ;;
+  prod-build)
+    docker compose -f docker-compose.prod.yml build
+    ;;
+  prod-up)
+    ./scripts/generate-local-tls-certs.sh
+    docker compose -f docker-compose.prod.yml up --build -d
+    ;;
+  prod-down)
+    docker compose -f docker-compose.prod.yml down
+    ;;
+  prod-verify)
+    ./scripts/generate-local-tls-certs.sh
+    export JWT_SECRET_KEY="${JWT_SECRET_KEY:-$(openssl rand -hex 32)}"
+    export POSTGRES_PASSWORD="${POSTGRES_PASSWORD:-monetra}"
+    export POSTGRES_DB="${POSTGRES_DB:-monetra}"
+    export POSTGRES_USER="${POSTGRES_USER:-monetra}"
+    docker compose down || true
+    docker compose -f docker-compose.prod.yml down || true
+    docker compose -f docker-compose.prod.yml up --build -d
+    sleep 30
+    curl -f http://localhost/nginx-health
+    curl -k -f https://localhost/health
+    curl -k -f https://localhost/ready
+    curl -k -f https://localhost/
+    status="$(curl -k -s -o /dev/null -w '%{http_code}' https://localhost/api/v1/users/me)"
+    if [ "$status" != "401" ]; then
+      echo "Protected API route expected 401, got ${status}" >&2
+      exit 1
+    fi
+    status="$(curl -s -o /dev/null -w '%{http_code}' http://localhost/health)"
+    if [ "$status" != "301" ]; then
+      echo "HTTP to HTTPS redirect expected 301, got ${status}" >&2
+      exit 1
+    fi
+    echo "Production stack smoke checks passed."
     ;;
   verify)
     "$0" lint
