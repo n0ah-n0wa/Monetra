@@ -58,7 +58,7 @@ export function LoginPage() {
     <AuthLayout pageTitle="Sign in">
       <Card>
         <CardHeader>
-          <CardTitle>Sign in</CardTitle>
+          <CardTitle aria-hidden="true">Sign in</CardTitle>
           <CardDescription>Access your Monetra dashboard.</CardDescription>
         </CardHeader>
         <CardContent>

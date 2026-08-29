@@ -155,7 +155,7 @@ describe("auth pages", () => {
     await user.type(screen.getByLabelText(/^email/i), "user@example.com");
     await user.click(screen.getByRole("button", { name: /send reset link/i }));
 
-    expect(await screen.findByText(/check your inbox/i)).toBeInTheDocument();
+    expect(await screen.findByText(/reset requested/i)).toBeInTheDocument();
   });
 
   it("validates matching passwords on reset form", async () => {
@@ -165,7 +165,7 @@ describe("auth pages", () => {
       initialEntries: [`${routes.resetPassword}?token=abc`],
     });
 
-    await screen.findByRole("heading", { name: /choose a new password/i });
+    await screen.findByRole("heading", { name: /reset password/i });
     expect(screen.getByLabelText(/reset token/i)).toHaveValue("abc");
     await user.type(screen.getByLabelText(/^new password/i), "Password1");
     await user.type(screen.getByLabelText(/confirm password/i), "Password2");

@@ -4,6 +4,8 @@ import pytest
 from app.core.config import Settings
 from pydantic import ValidationError
 
+_PRODUCTION_DATABASE_URL = "postgresql+psycopg://prod:prod@db.example.com:5432/monetra"
+
 
 def test_development_allows_default_secret() -> None:
     settings = Settings(
@@ -45,12 +47,24 @@ def test_production_rejects_wildcard_cors() -> None:
         )
 
 
+def test_production_rejects_default_database_url() -> None:
+    with pytest.raises(ValidationError):
+        Settings(
+            app_env="production",
+            jwt_secret_key="production-secret-key-with-enough-length",
+            debug=False,
+            cors_origins=["https://app.example.com"],
+            database_url="postgresql+psycopg://monetra:monetra@localhost:5432/monetra",
+        )
+
+
 def test_production_disables_docs() -> None:
     settings = Settings(
         app_env="production",
         jwt_secret_key="production-secret-key-with-enough-length",
         debug=False,
         cors_origins=["https://app.example.com"],
+        database_url="postgresql+psycopg://prod:prod@db.example.com:5432/monetra",
     )
     assert settings.is_production
     assert settings.trusted_proxy_count == 1

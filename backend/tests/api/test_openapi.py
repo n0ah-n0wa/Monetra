@@ -24,6 +24,7 @@ def test_production_app_hides_openapi() -> None:
         jwt_secret_key="production-secret-key-with-enough-length",
         debug=False,
         cors_origins=["https://app.example.com"],
+        database_url="postgresql+psycopg://prod:prod@db.example.com:5432/monetra",
     )
     application = create_app(settings=settings)
     assert application.docs_url is None

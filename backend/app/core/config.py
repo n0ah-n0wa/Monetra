@@ -7,6 +7,7 @@ from pydantic import Field, PostgresDsn, field_validator, model_validator
 from pydantic_settings import BaseSettings, NoDecode, SettingsConfigDict
 
 _DEFAULT_JWT_SECRET = "change-me-in-production-use-a-long-random-secret"  # noqa: S105
+_DEFAULT_DATABASE_URL = "postgresql+psycopg://monetra:monetra@localhost:5432/monetra"
 
 
 class Settings(BaseSettings):
@@ -43,9 +44,7 @@ class Settings(BaseSettings):
     )
 
     database_url: PostgresDsn = Field(
-        default=PostgresDsn(
-            "postgresql+psycopg://monetra:monetra@localhost:5432/monetra"
-        ),
+        default=PostgresDsn(_DEFAULT_DATABASE_URL),
     )
     database_pool_size: int = 5
     database_max_overflow: int = 10
@@ -83,7 +82,11 @@ class Settings(BaseSettings):
     import_max_file_bytes: int = Field(default=5 * 1024 * 1024, ge=1024)
     import_max_rows: int = Field(default=10_000, ge=1)
     import_preview_limit: int = Field(default=50, ge=1)
+    import_commit_batch_size: int = Field(default=250, ge=1)
     export_max_rows: int = Field(default=10_000, ge=1)
+
+    analytics_max_custom_period_days: int = Field(default=366, ge=1)
+    recurring_max_catch_up_executions: int = Field(default=90, ge=1)
 
     exchange_rate_provider: Literal["none", "static", "test"] = "none"
     exchange_rate_static_rates: str = ""
@@ -115,6 +118,9 @@ class Settings(BaseSettings):
                 raise ValueError(msg)
             if "*" in self.cors_origins:
                 msg = "CORS_ORIGINS must not use wildcard '*' in production"
+                raise ValueError(msg)
+            if str(self.database_url) == _DEFAULT_DATABASE_URL:
+                msg = "DATABASE_URL must not use the development default in production"
                 raise ValueError(msg)
             object.__setattr__(self, "refresh_token_cookie_secure", True)
             if self.trusted_proxy_count < 1:

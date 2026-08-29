@@ -26,6 +26,7 @@ def resolve_analytics_period(
     as_of_date: date,
     date_from: date | None,
     date_to: date | None,
+    max_custom_period_days: int = 366,
 ) -> tuple[date, date]:
     if preset == AnalyticsPeriodPreset.CUSTOM:
         if date_from is None or date_to is None:
@@ -37,6 +38,19 @@ def resolve_analytics_period(
             raise ValidationAppError(
                 code="INVALID_DATE_RANGE",
                 message="date_from must be on or before date_to.",
+            )
+        span_days = (date_to - date_from).days + 1
+        if span_days > max_custom_period_days:
+            raise ValidationAppError(
+                code="INVALID_DATE_RANGE",
+                message=(
+                    "Custom analytics periods cannot exceed "
+                    f"{max_custom_period_days} days."
+                ),
+                details={
+                    "max_custom_period_days": max_custom_period_days,
+                    "requested_days": span_days,
+                },
             )
         return date_from, date_to
 

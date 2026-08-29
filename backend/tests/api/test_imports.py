@@ -126,6 +126,22 @@ async def test_upload_preview_confirm_happy_path(auth_client: AsyncClient) -> No
     assert listed.json()["total_items"] == 2
 
 
+async def test_upload_rejects_unsupported_content_type(
+    auth_client: AsyncClient,
+) -> None:
+    token = await _register_token(auth_client)
+    account_id = await _create_account(auth_client, token)
+    csv = CSV_HEADER + "2026-01-15,expense,10.00,Coffee,Groceries,,\n"
+    response = await auth_client.post(
+        API,
+        data={"account_id": account_id},
+        files={"file": ("import.csv", BytesIO(csv.encode("utf-8")), "image/png")},
+        headers=_auth_headers(token),
+    )
+    assert response.status_code == 422
+    assert response.json()["error"]["code"] == "INVALID_CONTENT_TYPE"
+
+
 async def test_validation_errors_and_malformed_rows(auth_client: AsyncClient) -> None:
     token = await _register_token(auth_client)
     account_id = await _create_account(auth_client, token)

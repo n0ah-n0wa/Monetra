@@ -9,7 +9,7 @@ from decimal import Decimal
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.config import Settings
+from app.core.config import Settings, get_settings
 from app.core.exceptions import ValidationAppError
 from app.domain.analytics import (
     compute_net_cash_flow,
@@ -71,11 +71,13 @@ def _resolve_period(
     reporting_currency: str | None,
 ) -> ResolvedAnalyticsPeriod:
     effective_as_of = as_of_date or datetime.now(UTC).date()
+    settings = get_settings()
     start_date, end_date = resolve_analytics_period(
         preset=preset,
         as_of_date=effective_as_of,
         date_from=date_from,
         date_to=date_to,
+        max_custom_period_days=settings.analytics_max_custom_period_days,
     )
     currency = normalize_currency(reporting_currency or user.reporting_currency)
     return ResolvedAnalyticsPeriod(

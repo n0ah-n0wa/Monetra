@@ -81,7 +81,7 @@ def test_initial_next_execution_date_is_start_date() -> None:
 
 
 def test_due_execution_dates_collects_missed_daily_runs() -> None:
-    due = due_execution_dates(
+    due, truncated = due_execution_dates(
         next_execution_date=date(2026, 1, 1),
         frequency=RecurringFrequency.DAILY,
         start_date=date(2026, 1, 1),
@@ -90,10 +90,11 @@ def test_due_execution_dates_collects_missed_daily_runs() -> None:
         executed_dates=set(),
     )
     assert due == [date(2026, 1, 1), date(2026, 1, 2), date(2026, 1, 3)]
+    assert truncated is False
 
 
 def test_due_execution_dates_skips_already_executed_dates() -> None:
-    due = due_execution_dates(
+    due, truncated = due_execution_dates(
         next_execution_date=date(2026, 1, 1),
         frequency=RecurringFrequency.DAILY,
         start_date=date(2026, 1, 1),
@@ -102,10 +103,11 @@ def test_due_execution_dates_skips_already_executed_dates() -> None:
         executed_dates={date(2026, 1, 2)},
     )
     assert due == [date(2026, 1, 1), date(2026, 1, 3)]
+    assert truncated is False
 
 
 def test_due_execution_dates_respects_end_date() -> None:
-    due = due_execution_dates(
+    due, truncated = due_execution_dates(
         next_execution_date=date(2026, 1, 1),
         frequency=RecurringFrequency.DAILY,
         start_date=date(2026, 1, 1),
@@ -114,6 +116,21 @@ def test_due_execution_dates_respects_end_date() -> None:
         executed_dates=set(),
     )
     assert due == [date(2026, 1, 1), date(2026, 1, 2)]
+    assert truncated is False
+
+
+def test_due_execution_dates_caps_max_executions() -> None:
+    due, truncated = due_execution_dates(
+        next_execution_date=date(2026, 1, 1),
+        frequency=RecurringFrequency.DAILY,
+        start_date=date(2026, 1, 1),
+        end_date=None,
+        as_of_date=date(2026, 1, 10),
+        executed_dates=set(),
+        max_executions=3,
+    )
+    assert due == [date(2026, 1, 1), date(2026, 1, 2), date(2026, 1, 3)]
+    assert truncated is True
 
 
 def test_recompute_next_execution_date_skips_executed_and_leap_year_anchor() -> None:

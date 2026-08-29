@@ -152,9 +152,12 @@ def _validate_upload(
     raw_bytes: bytes,
     settings: Settings,
 ) -> str:
-    if content_type and content_type.split(";")[0].strip().lower() not in (
-        *_ALLOWED_CONTENT_TYPES,
-    ):
+    if content_type is None or not content_type.strip():
+        raise ValidationAppError(
+            code="INVALID_CONTENT_TYPE",
+            message="Content-Type header is required for CSV upload.",
+        )
+    if content_type.split(";")[0].strip().lower() not in (*_ALLOWED_CONTENT_TYPES,):
         raise ValidationAppError(
             code="INVALID_CONTENT_TYPE",
             message="Unsupported content type for CSV upload.",
@@ -537,23 +540,11 @@ async def confirm_import(
     await session.flush()
 
     try:
-        locked = await transaction_repo.lock_accounts_for_update(
-            session,
-            user_id=user_id,
-            account_ids={account.id},
-        )
-        locked_account = locked.get(account.id)
-        if locked_account is None:
-            raise NotFoundError(
-                code="ACCOUNT_NOT_FOUND",
-                message="Financial account was not found.",
-            )
-
         candidates = [row for row in preview_rows if row.get("category_id")]
         existing_refs, existing_fingerprints = await _live_duplicate_sets(
             session,
             user_id=user_id,
-            account_id=locked_account.id,
+            account_id=account.id,
             candidates=candidates,
         )
 
@@ -624,33 +615,74 @@ async def confirm_import(
         imported = 0
         expense_dates: set[date] = set()
         imported_dates: set[date] = set()
-        for row in importable:
-            amount = Decimal(str(row["amount"]))
-            transaction_type = TransactionType(str(row["transaction_type"]))
-            row_date = date.fromisoformat(str(row["transaction_date"]))
-            imported_dates.add(row_date)
-            if transaction_type == TransactionType.EXPENSE:
-                expense_dates.add(row_date)
-            delta = signed_transaction_amount(transaction_type, amount)
-            locked_account.current_balance = apply_balance_delta(
-                locked_account.current_balance,
-                delta,
-            )
-            await transaction_repo.create_transaction(
+        batch_size = settings.import_commit_batch_size
+
+        for batch_start in range(0, len(importable), batch_size):
+            batch = importable[batch_start : batch_start + batch_size]
+            locked = await transaction_repo.lock_accounts_for_update(
                 session,
                 user_id=user_id,
-                account_id=locked_account.id,
-                category_id=uuid.UUID(str(row["category_id"])),
-                transaction_type=transaction_type,
-                amount=amount,
-                currency=locked_account.currency,
-                description=str(row["description"]),
-                transaction_date=row_date,
-                notes=row.get("notes"),
-                import_job_id=job.id,
-                external_reference=row.get("external_reference"),
+                account_ids={account.id},
             )
-            imported += 1
+            locked_account = locked.get(account.id)
+            if locked_account is None:
+                raise NotFoundError(
+                    code="ACCOUNT_NOT_FOUND",
+                    message="Financial account was not found.",
+                )
+
+            for row in batch:
+                amount = Decimal(str(row["amount"]))
+                transaction_type = TransactionType(str(row["transaction_type"]))
+                row_date = date.fromisoformat(str(row["transaction_date"]))
+                imported_dates.add(row_date)
+                if transaction_type == TransactionType.EXPENSE:
+                    expense_dates.add(row_date)
+                delta = signed_transaction_amount(transaction_type, amount)
+                locked_account.current_balance = apply_balance_delta(
+                    locked_account.current_balance,
+                    delta,
+                )
+                await transaction_repo.create_transaction(
+                    session,
+                    user_id=user_id,
+                    account_id=locked_account.id,
+                    category_id=uuid.UUID(str(row["category_id"])),
+                    transaction_type=transaction_type,
+                    amount=amount,
+                    currency=locked_account.currency,
+                    description=str(row["description"]),
+                    transaction_date=row_date,
+                    notes=row.get("notes"),
+                    import_job_id=job.id,
+                    external_reference=row.get("external_reference"),
+                )
+                imported += 1
+
+            await session.commit()
+
+        job = await import_repo.get_import_job_for_update(
+            session,
+            user_id=user_id,
+            job_id=job_id,
+        )
+        if job is None:
+            raise NotFoundError(
+                code="IMPORT_JOB_NOT_FOUND",
+                message="Import job was not found.",
+            )
+
+        locked = await transaction_repo.lock_accounts_for_update(
+            session,
+            user_id=user_id,
+            account_ids={account.id},
+        )
+        locked_account = locked.get(account.id)
+        if locked_account is None:
+            raise NotFoundError(
+                code="ACCOUNT_NOT_FOUND",
+                message="Financial account was not found.",
+            )
 
         for evaluation_date in _budget_evaluation_dates(expense_dates):
             await notification_service.evaluate_budgets_after_expense(

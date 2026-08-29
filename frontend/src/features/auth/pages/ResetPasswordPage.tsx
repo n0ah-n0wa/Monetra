@@ -1,4 +1,5 @@
 import { Link, useSearchParams } from "react-router-dom";
+import { useEffect } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { FormError } from "@/components/forms/FormError";
 import { FormField } from "@/components/forms/FormField";
@@ -22,8 +23,9 @@ import { applyApiErrorToForm, useZodForm } from "@/lib/form";
 import { routes } from "@/lib/routes";
 
 export function ResetPasswordPage() {
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const tokenFromQuery = searchParams.get("token") ?? "";
+  const hadTokenInUrl = tokenFromQuery.length > 0;
 
   const form = useZodForm<ResetPasswordFormValues>(resetPasswordSchema, {
     defaultValues: {
@@ -33,6 +35,14 @@ export function ResetPasswordPage() {
     },
     mode: "onSubmit",
   });
+
+  useEffect(() => {
+    if (!tokenFromQuery) {
+      return;
+    }
+    form.setValue("token", tokenFromQuery);
+    setSearchParams({}, { replace: true });
+  }, [form, setSearchParams, tokenFromQuery]);
 
   const mutation = useMutation({
     mutationFn: authApi.confirmPasswordReset,
@@ -54,9 +64,9 @@ export function ResetPasswordPage() {
     <AuthLayout pageTitle="Reset password">
       <Card>
         <CardHeader>
-          <CardTitle>Choose a new password</CardTitle>
+          <CardTitle aria-hidden="true">Choose a new password</CardTitle>
           <CardDescription>
-            {tokenFromQuery
+            {hadTokenInUrl
               ? "Enter and confirm your new password."
               : "Paste your reset token, then choose a new password."}
           </CardDescription>

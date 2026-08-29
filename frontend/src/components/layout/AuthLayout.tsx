@@ -25,6 +25,7 @@ export function AuthLayout({ children, title, pageTitle }: AuthLayoutProps) {
           <Link to="/login" className="auth-layout__brand" aria-label="Monetra home">
             Monetra
           </Link>
+          {pageTitle ? <h1 className="sr-only">{pageTitle}</h1> : null}
           {title ? <p className="auth-layout__subtitle">{title}</p> : null}
         </header>
         <main>{children}</main>

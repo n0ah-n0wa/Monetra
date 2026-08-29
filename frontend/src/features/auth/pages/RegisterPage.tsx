@@ -38,7 +38,7 @@ export function RegisterPage() {
     <AuthLayout pageTitle="Create account">
       <Card>
         <CardHeader>
-          <CardTitle>Create account</CardTitle>
+          <CardTitle aria-hidden="true">Create account</CardTitle>
           <CardDescription>Start tracking your finances with Monetra.</CardDescription>
         </CardHeader>
         <CardContent>

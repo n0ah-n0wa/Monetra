@@ -65,6 +65,14 @@ else
   warn "openssl not available; skipping TLS expiry and key-pair checks"
 fi
 
+if [[ "${APP_ENV:-}" != "production" ]]; then
+  fail "APP_ENV must be production (got: ${APP_ENV:-unset})"
+fi
+
+if [[ "${DEBUG:-false}" == "true" ]]; then
+  fail "DEBUG must be false in production"
+fi
+
 if ! docker compose -f "$COMPOSE_FILE" config >/dev/null 2>&1; then
   fail "docker compose config failed for ${COMPOSE_FILE}"
 fi

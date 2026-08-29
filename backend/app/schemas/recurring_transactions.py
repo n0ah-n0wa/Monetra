@@ -85,3 +85,4 @@ class ProcessDueRecurringRequest(BaseModel):
 class ProcessDueRecurringResponse(BaseModel):
     as_of_date: date
     executions: list[RecurringExecutionResult]
+    truncated: bool = False

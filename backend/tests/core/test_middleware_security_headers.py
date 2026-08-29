@@ -34,6 +34,7 @@ async def test_hsts_header_set_in_production_over_https() -> None:
         jwt_secret_key="production-secret-key-with-enough-length",
         debug=False,
         cors_origins=["https://app.example.com"],
+        database_url="postgresql+psycopg://prod:prod@db.example.com:5432/monetra",
     )
     headers = await _get_headers(settings, forwarded_proto="https")
     assert headers.get("strict-transport-security") == (
@@ -47,6 +48,7 @@ async def test_hsts_header_omitted_for_plain_http() -> None:
         jwt_secret_key="production-secret-key-with-enough-length",
         debug=False,
         cors_origins=["https://app.example.com"],
+        database_url="postgresql+psycopg://prod:prod@db.example.com:5432/monetra",
     )
     headers = await _get_headers(settings)
     assert "strict-transport-security" not in headers

@@ -44,15 +44,18 @@ export function ForgotPasswordPage() {
     <AuthLayout pageTitle="Forgot password">
       <Card>
         <CardHeader>
-          <CardTitle>Forgot password</CardTitle>
+          <CardTitle aria-hidden="true">Forgot password</CardTitle>
           <CardDescription>
-            Enter your email and we will send reset instructions if an account exists.
+            Request a password reset. Email delivery must be configured by the operator;
+            otherwise use the reset token from server logs in development.
           </CardDescription>
         </CardHeader>
         <CardContent>
           {mutation.isSuccess ? (
-            <Alert variant="success" title="Check your inbox">
-              If an account exists for that email, reset instructions have been sent.
+            <Alert variant="success" title="Reset requested">
+              If an account exists and email delivery is configured, reset instructions
+              have been sent. Otherwise contact your administrator or check server logs
+              in development.
             </Alert>
           ) : (
             <form

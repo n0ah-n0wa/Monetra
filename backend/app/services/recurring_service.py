@@ -8,7 +8,7 @@ from datetime import UTC, date, datetime
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.config import Settings
+from app.core.config import Settings, get_settings
 from app.core.exceptions import ConflictError, NotFoundError, ValidationAppError
 from app.domain.notifications import NotificationProvider
 from app.domain.recurring import (
@@ -440,21 +440,23 @@ async def _process_recurring_definition(
     recurring: RecurringTransaction,
     as_of_date: date,
     provider: NotificationProvider | None = None,
-) -> list[RecurringExecutionResult]:
+    max_catch_up_executions: int,
+) -> tuple[list[RecurringExecutionResult], bool]:
     if not recurring.is_active:
-        return []
+        return [], False
 
     executed_dates = await recurring_repo.list_executed_dates(
         session,
         recurring_id=recurring.id,
     )
-    dates_to_run = due_execution_dates(
+    dates_to_run, truncated = due_execution_dates(
         next_execution_date=recurring.next_execution_date,
         frequency=recurring.frequency,
         start_date=recurring.start_date,
         end_date=recurring.end_date,
         as_of_date=as_of_date,
         executed_dates=executed_dates,
+        max_executions=max_catch_up_executions,
     )
 
     results: list[RecurringExecutionResult] = []
@@ -497,7 +499,7 @@ async def _process_recurring_definition(
             recurring.next_execution_date = synced
         _deactivate_if_past_end(recurring)
 
-    return results
+    return results, truncated
 
 
 async def process_due_recurring_transactions_for_user(
@@ -515,21 +517,25 @@ async def process_due_recurring_transactions_for_user(
         as_of_date=effective_date,
     )
 
+    settings = get_settings()
     executions: list[RecurringExecutionResult] = []
+    truncated = False
     for recurring in due_items:
-        executions.extend(
-            await _process_recurring_definition(
-                session,
-                recurring=recurring,
-                as_of_date=effective_date,
-                provider=provider,
-            ),
+        batch_results, batch_truncated = await _process_recurring_definition(
+            session,
+            recurring=recurring,
+            as_of_date=effective_date,
+            provider=provider,
+            max_catch_up_executions=settings.recurring_max_catch_up_executions,
         )
+        executions.extend(batch_results)
+        truncated = truncated or batch_truncated
 
     await session.commit()
     return ProcessDueRecurringResponse(
         as_of_date=effective_date,
         executions=executions,
+        truncated=truncated,
     )
 
 
@@ -546,19 +552,23 @@ async def process_due_recurring_transactions(
         as_of_date=effective_date,
     )
 
+    settings = get_settings()
     executions: list[RecurringExecutionResult] = []
+    truncated = False
     for recurring in due_items:
-        executions.extend(
-            await _process_recurring_definition(
-                session,
-                recurring=recurring,
-                as_of_date=effective_date,
-                provider=provider,
-            ),
+        batch_results, batch_truncated = await _process_recurring_definition(
+            session,
+            recurring=recurring,
+            as_of_date=effective_date,
+            provider=provider,
+            max_catch_up_executions=settings.recurring_max_catch_up_executions,
         )
+        executions.extend(batch_results)
+        truncated = truncated or batch_truncated
 
     await session.commit()
     return ProcessDueRecurringResponse(
         as_of_date=effective_date,
         executions=executions,
+        truncated=truncated,
     )

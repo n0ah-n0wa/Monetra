@@ -111,6 +111,17 @@ def test_custom_period_rejects_inverted_range() -> None:
         )
 
 
+def test_custom_period_rejects_excessive_span() -> None:
+    with pytest.raises(ValidationAppError, match="366"):
+        resolve_analytics_period(
+            preset=AnalyticsPeriodPreset.CUSTOM,
+            as_of_date=date(2026, 12, 31),
+            date_from=date(2026, 1, 1),
+            date_to=date(2027, 1, 2),
+            max_custom_period_days=366,
+        )
+
+
 def test_resolve_previous_period_equal_length() -> None:
     start, end = resolve_previous_period(date(2026, 1, 10), date(2026, 1, 20))
     assert (end - start).days == (date(2026, 1, 20) - date(2026, 1, 10)).days

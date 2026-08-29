@@ -76,21 +76,45 @@ def due_execution_dates(
     end_date: date | None,
     as_of_date: date,
     executed_dates: set[date],
-) -> list[date]:
-    """Return ordered due dates up to ``as_of_date`` that are not yet executed."""
+    max_executions: int | None = None,
+) -> tuple[list[date], bool]:
+    """Return ordered due dates up to ``as_of_date`` that are not yet executed.
+
+    When ``max_executions`` is set, at most that many due dates are returned.
+    The second return value is ``True`` when additional due dates remain.
+    """
     due: list[date] = []
+    truncated = False
     candidate = next_execution_date
     while candidate <= as_of_date:
         if not is_execution_due(candidate, end_date=end_date):
             break
         if candidate not in executed_dates:
             due.append(candidate)
+            if max_executions is not None and len(due) >= max_executions:
+                peek = advance_execution_date(
+                    candidate,
+                    frequency,
+                    start_date=start_date,
+                )
+                while peek <= as_of_date:
+                    if not is_execution_due(peek, end_date=end_date):
+                        break
+                    if peek not in executed_dates:
+                        truncated = True
+                        break
+                    peek = advance_execution_date(
+                        peek,
+                        frequency,
+                        start_date=start_date,
+                    )
+                break
         candidate = advance_execution_date(
             candidate,
             frequency,
             start_date=start_date,
         )
-    return due
+    return due, truncated
 
 
 def advance_next_execution_pointer(

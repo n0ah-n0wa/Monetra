@@ -164,6 +164,7 @@ def test_production_cookie_settings_force_secure_flag() -> None:
         jwt_secret_key="production-secret-key-with-enough-length",
         debug=False,
         cors_origins=["https://app.example.com"],
+        database_url="postgresql+psycopg://prod:prod@db.example.com:5432/monetra",
     )
     assert settings.refresh_token_cookie_secure is True
 
