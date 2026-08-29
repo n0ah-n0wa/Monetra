@@ -33,9 +33,19 @@ frontend/test-results/
 
 # Environment and secrets
 .env
-.env.local
-.env.*.local
+.env.*
 !.env.example
+!.env.production.example
+
+# TLS / private keys (never commit)
+*.pem
+*.key
+*.pfx
+*.p12
+
+# Local compose overrides (often contain secrets)
+docker-compose.override.yml
+docker-compose.*.local.yml
 
 # IDE / OS
 .idea/
