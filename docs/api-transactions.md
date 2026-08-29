@@ -19,10 +19,10 @@ Transactions are soft-deleted (`deleted_at` set) to preserve ledger integrity. D
 For each account:
 
 ```text
-current_balance = opening_balance + income - expenses (+ transfers when implemented)
+current_balance = opening_balance + income - expenses ± transfer effects
 ```
 
-Balance updates are applied atomically with transaction create, update, and delete operations using exact `Decimal` arithmetic.
+Balance updates are applied atomically with transaction create, update, and delete operations using exact `Decimal` arithmetic. Transfers adjust both source and destination account balances via the transfers service.
 
 ## Create body
 

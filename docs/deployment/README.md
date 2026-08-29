@@ -33,6 +33,9 @@ EC2 instance
 | [Backup and restore](./backup-restore.md) | Scheduled PostgreSQL backups, retention, restore drills, disaster recovery |
 | [GitHub Actions CI/CD](./github-actions.md) | CI jobs, production deploy workflow, required secrets |
 | [SRE audit](./sre-audit.md) | Production readiness review and failure scenarios |
+| [Troubleshooting](../troubleshooting.md) | Common development and deployment issues |
+| [Database schema](../database.md) | ER diagram, tables, migrations |
+| [Testing](../testing.md) | Unit, E2E, and CI testing |
 
 ## Prerequisites
 
@@ -98,4 +101,6 @@ None of these require Kubernetes for a small SaaS footprint.
 - `docker-compose.prod.yml` — production service definitions
 - `.env.production.example` — production environment template
 - `docs/architecture.md` — application topology
+- `docs/database.md` — schema and migrations
+- `docs/troubleshooting.md` — common issues
 - `SPECIFICATIONS.md` §§49–51 — deployment, HTTPS, backups
