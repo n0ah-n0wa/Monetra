@@ -1,5 +1,7 @@
 # Monetra
 
+[![CI](https://github.com/n0ah-n0wa/Monetra/actions/workflows/ci.yml/badge.svg)](https://github.com/n0ah-n0wa/Monetra/actions/workflows/ci.yml)
+
 A full-stack personal finance platform built to demonstrate production-oriented software engineering: exact-decimal money handling, layered API design, containerized deployment, automated quality gates, and operational runbooks for a single-host AWS deployment.
 
 ---
